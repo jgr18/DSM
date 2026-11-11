@@ -1,0 +1,254 @@
+{
+  "formaat": "dsm-werkbank",
+  "formaatversie": 1,
+  "naam": "Productontwikkeling (voorbeeld)",
+  "invoerversie": 1,
+  "structuurversie": 1,
+  "volgendeNummer": 13,
+  "vervallenIds": [],
+  "activiteiten": [
+    {
+      "id": "A001",
+      "naam": "Klanteisen vastleggen",
+      "eigenaar": "Productmanager"
+    },
+    {
+      "id": "A002",
+      "naam": "Conceptontwerp",
+      "eigenaar": "Ontwerp"
+    },
+    {
+      "id": "A003",
+      "naam": "Specificaties opstellen",
+      "eigenaar": "Ontwerp"
+    },
+    {
+      "id": "A004",
+      "naam": "Constructieberekening",
+      "eigenaar": "Engineering"
+    },
+    {
+      "id": "A005",
+      "naam": "Detailontwerp",
+      "eigenaar": "Ontwerp"
+    },
+    {
+      "id": "A006",
+      "naam": "Materiaalkeuze",
+      "eigenaar": "Engineering"
+    },
+    {
+      "id": "A007",
+      "naam": "Kostenraming",
+      "eigenaar": "Inkoop"
+    },
+    {
+      "id": "A008",
+      "naam": "Prototype bouwen",
+      "eigenaar": "Werkplaats"
+    },
+    {
+      "id": "A009",
+      "naam": "Prototype testen",
+      "eigenaar": "Kwaliteit"
+    },
+    {
+      "id": "A010",
+      "naam": "Productie voorbereiden",
+      "eigenaar": "Productie"
+    },
+    {
+      "id": "A011",
+      "naam": "Goedkeuring klant",
+      "eigenaar": "Productmanager"
+    },
+    {
+      "id": "A012",
+      "naam": "Documentatie opstellen",
+      "eigenaar": "Kwaliteit"
+    }
+  ],
+  "relaties": [
+    {
+      "van": "A001",
+      "naar": "A002",
+      "soort": "I",
+      "info": "Klanteisen en randvoorwaarden",
+      "zekerheid": "",
+      "frequentie": "",
+      "bron": ""
+    },
+    {
+      "van": "A001",
+      "naar": "A003",
+      "soort": "I",
+      "info": "Prestatie-eisen",
+      "zekerheid": "",
+      "frequentie": "",
+      "bron": ""
+    },
+    {
+      "van": "A002",
+      "naar": "A003",
+      "soort": "I",
+      "info": "Gekozen concept",
+      "zekerheid": "",
+      "frequentie": "",
+      "bron": ""
+    },
+    {
+      "van": "A003",
+      "naar": "A004",
+      "soort": "I",
+      "info": "Belastingen en toleranties",
+      "zekerheid": "",
+      "frequentie": "",
+      "bron": ""
+    },
+    {
+      "van": "A004",
+      "naar": "A005",
+      "soort": "H",
+      "info": "Goedgekeurde berekening",
+      "zekerheid": "",
+      "frequentie": "",
+      "bron": ""
+    },
+    {
+      "van": "A005",
+      "naar": "A004",
+      "soort": "I",
+      "info": "Voorlopige afmetingen",
+      "zekerheid": "",
+      "frequentie": "",
+      "bron": ""
+    },
+    {
+      "van": "A005",
+      "naar": "A006",
+      "soort": "I",
+      "info": "Geometrie en belastingpunten",
+      "zekerheid": "",
+      "frequentie": "",
+      "bron": ""
+    },
+    {
+      "van": "A006",
+      "naar": "A004",
+      "soort": "A",
+      "info": "Materiaaleigenschappen (E-modulus, vloeigrens)",
+      "zekerheid": "",
+      "frequentie": "",
+      "bron": ""
+    },
+    {
+      "van": "A006",
+      "naar": "A007",
+      "soort": "I",
+      "info": "Materiaal en hoeveelheden",
+      "zekerheid": "",
+      "frequentie": "",
+      "bron": ""
+    },
+    {
+      "van": "A005",
+      "naar": "A007",
+      "soort": "I",
+      "info": "Stuklijst",
+      "zekerheid": "",
+      "frequentie": "",
+      "bron": ""
+    },
+    {
+      "van": "A005",
+      "naar": "A008",
+      "soort": "H",
+      "info": "Vrijgegeven tekeningen",
+      "zekerheid": "",
+      "frequentie": "",
+      "bron": ""
+    },
+    {
+      "van": "A006",
+      "naar": "A008",
+      "soort": "B",
+      "info": "Veiligheidsblad materiaal",
+      "zekerheid": "",
+      "frequentie": "",
+      "bron": ""
+    },
+    {
+      "van": "A008",
+      "naar": "A009",
+      "soort": "H",
+      "info": "Gereed prototype",
+      "zekerheid": "",
+      "frequentie": "",
+      "bron": ""
+    },
+    {
+      "van": "A009",
+      "naar": "A011",
+      "soort": "I",
+      "info": "Testrapport",
+      "zekerheid": "",
+      "frequentie": "",
+      "bron": ""
+    },
+    {
+      "van": "A007",
+      "naar": "A011",
+      "soort": "I",
+      "info": "Kostprijs",
+      "zekerheid": "",
+      "frequentie": "",
+      "bron": ""
+    },
+    {
+      "van": "A011",
+      "naar": "A010",
+      "soort": "H",
+      "info": "Klantgoedkeuring",
+      "zekerheid": "",
+      "frequentie": "",
+      "bron": ""
+    },
+    {
+      "van": "A009",
+      "naar": "A010",
+      "soort": "I",
+      "info": "Testbevindingen",
+      "zekerheid": "",
+      "frequentie": "",
+      "bron": ""
+    },
+    {
+      "van": "A008",
+      "naar": "A012",
+      "soort": "I",
+      "info": "Bouwervaringen",
+      "zekerheid": "",
+      "frequentie": "",
+      "bron": ""
+    },
+    {
+      "van": "A010",
+      "naar": "A012",
+      "soort": "I",
+      "info": "Productie-instructies",
+      "zekerheid": "",
+      "frequentie": "",
+      "bron": ""
+    }
+  ],
+  "zelfiteraties": [
+    "A009"
+  ],
+  "instellingen": {
+    "wisselingVoorkeur": true,
+    "maxExact": 8,
+    "tijdlimietMs": 3000
+  },
+  "instellingenversie": 1,
+  "analyse": null
+}
