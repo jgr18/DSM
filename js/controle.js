@@ -123,6 +123,46 @@
       }
     },
     {
+      naam: 'Tear doorbreekt een cyclus; relatie blijft bewaard',
+      uitleg: 'A001 ↔ A002 is een blok. Een tear op de A-relatie A002 → A001 heft het blok op in het scenario; in het basismodel blijft de relatie staan.',
+      test() {
+        const S = DSM.scenario, m = bouw(['a', 'b'], [['A001', 'A002', 'I'], ['A002', 'A001', 'A']]); S.zorgVoor(m);
+        const sc = S.nieuwScenario(m, 'T'); const f = S.zetTear(m, sc.id, { van: 'A002', naar: 'A001', aanname: 'schatting', controleNa: 'A002' });
+        const r = S.bereken(m, sc), basis = A.analyseer(m);
+        return { ok: !f && r.aantalIteratieblokken === 0 && basis.aantalIteratieblokken === 1 && m.relaties.length === 2 && gelijk(r.volgorde, ['A001', 'A002']), detail: 'scenario: ' + blokLeden(r).join(' | ') + ' · basis: ' + blokLeden(basis).join(' | ') };
+      }
+    },
+    {
+      naam: 'Harde voorwaarde kan niet worden getear\'d',
+      uitleg: 'Een tear op een H-relatie wordt geweigerd met een melding en herstelactie.',
+      test() {
+        const S = DSM.scenario, m = bouw(['a', 'b'], [['A001', 'A002', 'H'], ['A002', 'A001', 'I']]); S.zorgVoor(m);
+        const sc = S.nieuwScenario(m, 'T'); const f = S.zetTear(m, sc.id, { van: 'A001', naar: 'A002', aanname: 'x' });
+        return { ok: !!f && sc.tears.length === 0, detail: f ? f.melding : 'geen melding' };
+      }
+    },
+    {
+      naam: 'B-tear zonder afstemming telt mee als open punt',
+      uitleg: 'Een B-tear die nog niet is afgestemd doorbreekt de cyclus wel, maar staat als "niet afgestemd" in de samenvatting.',
+      test() {
+        const S = DSM.scenario, m = bouw(['a', 'b'], [['A001', 'A002', 'I'], ['A002', 'A001', 'B']]); S.zorgVoor(m);
+        const sc = S.nieuwScenario(m, 'T'); S.zetTear(m, sc.id, { van: 'A002', naar: 'A001', aanname: 'binnen norm', afgestemd: false }); S.bereken(m, sc);
+        const z = S.samenvatting(m, sc);
+        return { ok: z.tears === 1 && z.bOpen === 1 && z.blokken === 0, detail: 'tears ' + z.tears + ', B open ' + z.bOpen + ', blokken ' + z.blokken };
+      }
+    },
+    {
+      naam: 'Scenario verouderd na wijziging; tear ongeldig zonder relatie',
+      uitleg: 'Na het wissen van de getearde relatie in de basis staat het scenario op verouderd en wordt de tear als ongeldig gemeld.',
+      test() {
+        const S = DSM.scenario, m = bouw(['a', 'b'], [['A001', 'A002', 'I'], ['A002', 'A001', 'A']]); S.zorgVoor(m);
+        const sc = S.nieuwScenario(m, 'T'); S.zetTear(m, sc.id, { van: 'A002', naar: 'A001', aanname: 'x' }); S.bereken(m, sc);
+        const voor = S.status(m, sc).status; M.wisRelatie(m, 'A002', 'A001');
+        const na = S.status(m, sc).status, b = S.beoordeel(m, sc)[0];
+        return { ok: voor === 'actueel' && na === 'verouderd' && !b.geldig && b.fouten.length === 1, detail: voor + ' → ' + na + '; ' + (b.fouten[0] ? b.fouten[0].melding : '') };
+      }
+    },
+    {
       naam: '100 activiteiten binnen redelijke tijd',
       uitleg: 'Een model van 100 activiteiten met een keten en enkele terugkoppelingen wordt geanalyseerd.',
       test() {

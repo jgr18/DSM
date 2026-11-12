@@ -23,6 +23,8 @@
       activiteiten: [],
       relaties: [],
       zelfiteraties: [],
+      scenarios: [],
+      volgendeScenario: 1,
       instellingen: { wisselingVoorkeur: true, maxExact: 8, tijdlimietMs: 3000 },
       instellingenversie: 1,
       analyse: null
@@ -168,6 +170,11 @@
       if (!ids.has(r.van) || !ids.has(r.naar)) fouten.push({ bron: plek, melding: 'Relatie ' + r.van + ' → ' + r.naar + ' verwijst naar een onbekende activiteit.', herstel: 'Verwijder de relatie of voeg de activiteit toe.' });
       if (r.van === r.naar) fouten.push({ bron: plek, melding: 'Relatie ' + r.van + ' → ' + r.naar + ' verwijst naar zichzelf.', herstel: 'Zet de activiteit in "zelfiteraties" in plaats van als relatie.' });
       if (!SOORTEN[r.soort]) fouten.push({ bron: plek, melding: 'Onbekende soort "' + r.soort + '".', herstel: 'Gebruik I, H, B of A.' });
+    });
+    if (data.scenarios !== undefined && !Array.isArray(data.scenarios)) fouten.push({ bron: bron + ', scenarios', melding: 'De scenario\'s staan niet in een lijst.', herstel: 'Verwijder het onderdeel "scenarios" uit het bestand of herstel de opmaak.' });
+    (Array.isArray(data.scenarios) ? data.scenarios : []).forEach((sc, i) => {
+      if (!sc || !/^S\d+$/.test(sc.id || '')) fouten.push({ bron: bron + ', scenarios[' + (i + 1) + ']', melding: 'Ongeldige scenario-ID "' + (sc && sc.id) + '".', herstel: 'Gebruik ID\'s in de vorm S1.' });
+      else if (!Array.isArray(sc.tears)) fouten.push({ bron: bron + ', scenario ' + sc.id, melding: 'De tears staan niet in een lijst.', herstel: 'Herstel het onderdeel "tears" van dit scenario.' });
     });
     return fouten;
   }

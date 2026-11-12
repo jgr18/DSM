@@ -1,6 +1,6 @@
 # DSM-werkbank
 
-**Versie 0.2** — het versienummer staat in de kop van de werkbank. Na een update laadt de browser dankzij `?v=0.2` achter de scripts en de opmaak de nieuwe bestanden.
+**Versie 0.4** — het versienummer staat in de kop van de werkbank. Na een update laadt de browser dankzij `?v=0.4` achter de scripts en de opmaak de nieuwe bestanden.
 
 Webtool voor de analyse van projecten en processen met een Design Structure Matrix (DSM). De tool draait volledig in de browser: er is geen server, database of account nodig.
 
@@ -40,7 +40,44 @@ Webtool voor de analyse van projecten en processen met een Design Structure Matr
 - Foutmeldingen noemen de bron (bijvoorbeeld het plakveld met regelnummer) en een herstelactie.
 - `controle.html` rekent vaste controlevoorbeelden door: ketens, cycli, losse blokken, zelfiteraties, harde voorwaarden en tegenspraken, gewijzigde regelvolgorde, actualiteit, ID's en een model van 100 activiteiten.
 
-**Nog niet beschikbaar:** scenario's en tears, en het opgemaakte rapport (PDF en Excel met handleiding). Ook afdelingen, beschikbaarheidsdatums, doorlooptijd, capaciteit en simulatie zitten er nog niet in.
+**Nog niet beschikbaar:** het opgemaakte rapport (PDF en Excel met handleiding). Ook afdelingen, beschikbaarheidsdatums, doorlooptijd, capaciteit en simulatie zitten er nog niet in.
+
+## Wijzigingen in versie 0.4: help en uitleg
+
+- **Helppagina** (`help.html`), afdrukbaar, met 10 hoofdstukken:
+  - wat een DSM is en hoe je de matrix leest;
+  - de werkwijze;
+  - de relatiesoorten en de zelfiteratie;
+  - de analyse: Tarjan, de doelvolgorde, en "bewezen" tegenover "beste gevonden";
+  - de maten;
+  - scenario's en tears, met de regels per soort en waarom die zo zijn gekozen;
+  - controleerbaarheid;
+  - ontwerpkeuzes en verantwoording: wat uit de DSM-methode komt en wat een eigen keuze is;
+  - een begrippenlijst.
+- **Help-knop** in de kop: opent de helppagina vanaf het begin, in een eigen tabblad.
+- **Helpmodus (?):** klik op een onderdeel, bijvoorbeeld een relatievakje, de diagonaal, een maat, een label of een tabblad. De helppagina opent dan precies bij de uitleg daarover, en die alinea wordt gemarkeerd. In helpmodus verandert er niets aan het model. Met <kbd>Esc</kbd> of "Helpmodus stoppen" stop je.
+- **Relaties:** selecteer je een vakje met een relatie, dan staat rechts de volledige uitleg van die soort, net als bij de zelfiteratie.
+- **Uitleg per soort** noemt nu ook wat voor die soort bij een tear geldt.
+
+## Wijzigingen in versie 0.3: Scenario's & tears
+
+- **Wat een tear is:** met een tear doorbreek je in een scenario bewust een terugkoppeling. De ontvanger begint dan met een vastgelegde aanname. De oorspronkelijke relatie blijft in het basismodel staan; alleen in het scenario telt hij niet mee voor de iteratieblokken en de volgorde.
+- **Per tear leg je vast:**
+  - de aanname;
+  - de verantwoordelijke;
+  - het controlemoment, in de vorm "na afronding van activiteit …";
+  - de gevolgen als de aanname niet klopt.
+- **Regels per soort:**
+  - **A:** een tear mag; vastleggen is genoeg.
+  - **I:** een tear mag, met een waarschuwing dat er kans op herstelwerk is.
+  - **B:** stem eerst af met wie de grenzen stelt. Je legt vast met wie je hebt afgestemd en wat de status is. Een B-tear die nog niet is afgestemd, rekent wel mee in het scenario, maar staat als open punt "B-tear niet afgestemd".
+  - **H:** een tear is niet toegestaan.
+- **Scenario's beheren:** je maakt een scenario leeg of als kopie van een ander scenario. Je kunt een scenario een naam geven, kopiëren en verwijderen.
+- **Tear vanuit DSM analyse:** bij de relatiegegevens van een terugkoppeling staat de knop "Tear maken in scenario…".
+- **Vergelijken met de basis:** je ziet de terugkoppelingen, de afstand, de iteratieblokken, de B-tears die nog niet zijn afgestemd, de controlemomenten en de verschoven activiteiten.
+- **Verouderd:** wijzig je het basismodel, de instellingen of de tears, dan staat een scenario op "verouderd". Met "Opnieuw berekenen" werk je het bij. Een tear waarvan de relatie is verdwenen of een harde voorwaarde is geworden, wordt gemeld met een herstelactie en telt niet mee.
+- **Controles:** de controlepagina heeft 4 nieuwe controles voor tears, dus 17 in totaal.
+- **Nieuw bestand:** `js/scenario.js` bevat de scenario- en tearlogica.
 
 ## Wijzigingen in versie 0.2
 
@@ -80,10 +117,13 @@ Pak de map uit en dubbelklik op `index.html`. De tool werkt in een recente versi
 | Bestand | Inhoud |
 |---|---|
 | `index.html` | De werkbank |
+| `help.html` | Help en verantwoording |
 | `controle.html` | Controlevoorbeelden van de rekenkern |
 | `css/style.css` | Opmaak |
 | `js/model.js` | Gegevensmodel, ID's, validatie en opslag |
 | `js/analyse.js` | Tarjan, ordening, optimalisatie, maten en impact |
+| `js/scenario.js` | Scenario's en tears |
+| `js/helpmodus.js` | Helpmodus: van onderdeel naar uitleg |
 | `js/app.js` | Schermen en bediening |
 | `js/controle.js` | Definitie van de controlevoorbeelden |
 | `js/voorbeeld.js`, `voorbeelden/voorbeeldmodel.json` | Voorbeeldmodel |

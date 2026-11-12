@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DSM-werkbank</title>
-<link rel="stylesheet" href="css/style.css?v=0.2">
+<link rel="stylesheet" href="css/style.css?v=0.4">
 </head>
 <body>
 <header class="kop">
   <div class="kop-links">
     <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="24" height="24" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"></rect><rect x="4" y="4" width="5" height="5" fill="currentColor"></rect><rect x="10.5" y="10.5" width="5" height="5" fill="currentColor"></rect><rect x="17" y="17" width="5" height="5" fill="currentColor"></rect><rect x="17" y="4" width="5" height="5" fill="#E07A5F"></rect></svg>
     <span class="merk">DSM-werkbank</span>
-    <span class="versie" title="Versie van de DSM-werkbank">v0.2</span>
+    <span class="versie" title="Versie van de DSM-werkbank">v0.4</span>
     <label class="verborgen" for="modelnaam">Modelnaam</label>
     <input id="modelnaam" class="modelnaam" value="">
   </div>
@@ -24,6 +24,10 @@
       <button data-actie="openen" class="knop-donker">Openen…</button>
       <button data-actie="opslaan" class="knop-donker">Opslaan</button>
       <button data-actie="voorbeeld" class="knop-donker">Voorbeeld</button>
+    </div>
+    <div class="bestand-help" role="group" aria-label="Help">
+      <button id="knop-helpmodus" class="knop-donker knop-vraag" aria-pressed="false" title="Helpmodus: klik daarna op een onderdeel voor uitleg">?</button>
+      <a class="knop-donker knop-link" href="help.html" target="dsm-help">Help</a>
     </div>
     <input id="bestandkiezer" type="file" accept=".json,application/json" hidden>
   </div>
@@ -46,12 +50,15 @@
   </div>
 </nav>
 
+<div id="helpbalk" class="helpbalk" hidden><span><b>Helpmodus</b> — klik op een onderdeel om de uitleg te openen in een nieuw tabblad. <kbd>Esc</kbd> stopt.</span><button class="knop" data-help-stop>Helpmodus stoppen</button></div>
 <div id="meldingen" class="meldingen" aria-live="polite"></div>
 <main id="inhoud" class="inhoud"></main>
 
-<script src="js/model.js?v=0.2"></script>
-<script src="js/analyse.js?v=0.2"></script>
-<script src="js/voorbeeld.js?v=0.2"></script>
-<script src="js/app.js?v=0.2"></script>
+<script src="js/model.js?v=0.4"></script>
+<script src="js/analyse.js?v=0.4"></script>
+<script src="js/scenario.js?v=0.4"></script>
+<script src="js/voorbeeld.js?v=0.4"></script>
+<script src="js/app.js?v=0.4"></script>
+<script src="js/helpmodus.js?v=0.4"></script>
 </body>
 </html>

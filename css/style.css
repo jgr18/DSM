@@ -198,3 +198,35 @@ table.vergelijk tr.actief td { background: #F1F1EE; color: var(--tekst); font-we
 table.dsm .vijf-k { border-right: 1.5px solid #C8C8C2; }
 table.dsm .vijf-r, table.dsm tr.vijf-r > * { border-bottom: 1.5px solid #C8C8C2; }
 .toets { display: inline-block; margin-left: 6px; padding: 1px 6px; border: 1px solid #C9C9C4; border-bottom-width: 2px; border-radius: 4px; font-size: 11px; font-weight: 600; color: var(--tekst-2); background: #FAFAF7; }
+
+/* Scenario's en tears (v0.3) */
+table.dsm td.tear { background: #FFFFFF; outline: 1.5px dashed #5C5C58; outline-offset: -4px; color: var(--tekst-2); font-weight: 400; font-size: calc(var(--celtekst, 11px) + 3px); }
+table.dsm td.tear-open { background: #FFF4DC; outline-color: #B36B00; color: #8A4B00; }
+.chip.tearm { border: 1.5px dashed #5C5C58; color: var(--tekst-2); font-weight: 400; }
+.scen-rij { gap: 8px; }
+.scen-kaart, .kaart-basis { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: 44px; padding: 6px 12px; border: 1px solid #C9C9C4; border-radius: 8px; background: #FFFFFF; font-size: 13px; text-align: left; }
+.scen-kaart span, .kaart-basis span { font-size: 12px; color: var(--tekst-3); }
+.scen-kaart em { font-style: normal; color: #8A4B00; font-weight: 600; }
+.scen-kaart[aria-pressed="true"] { border: 2px solid var(--donker); background: #F4F4F2; }
+.kaart-basis { background: #F7F7F4; border-style: dashed; }
+.maat.open { background: #FFF4DC; border-color: #F2D58A; color: #4A3300; }
+.tear-item { display: flex; flex-direction: column; align-items: stretch; gap: 4px; width: 100%; padding: 10px 12px; border: 1px solid var(--lijn); border-radius: 8px; background: #FFFFFF; text-align: left; }
+.tear-item:hover { border-color: #9A9A94; }
+.tear-item.actief { border: 2px solid var(--keuze); }
+.label-fout { font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 999px; background: #FDF0EE; color: #7A1F12; }
+table.vergelijk-sc th.huidig, table.vergelijk-sc td.huidig { background: #F1F8F7; }
+table.vergelijk-sc tr.sub td { padding-top: 0; border-bottom: 1px solid #EFEFEA; color: var(--tekst-3); font-size: 11px; }
+table.vergelijk-sc tr:has(+ tr.sub) td { border-bottom: 0; }
+
+/* Help en helpmodus (v0.4) */
+.bestand-help { display: flex; gap: 6px; }
+.knop-link { display: inline-flex; align-items: center; text-decoration: none; }
+.knop-vraag { min-width: 36px; font-weight: 700; font-size: 15px; }
+.knop-vraag[aria-pressed="true"] { background: #FFE27A; color: #1F2328; border-color: #FFE27A; }
+.helpbalk { position: sticky; top: 0; z-index: 30; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 8px 24px; background: #FFE27A; color: #3A2600; font-size: 13px; }
+.helpbalk[hidden] { display: none; }
+kbd { font-family: inherit; font-size: 12px; font-weight: 600; padding: 1px 6px; border: 1px solid #C9A400; border-bottom-width: 2px; border-radius: 4px; background: #FFF4CC; }
+body.helpmodus, body.helpmodus * { cursor: help !important; }
+body.helpmodus .help-doel { outline: 2px dashed #B38600 !important; outline-offset: 2px; }
+body.helpmodus table.dsm td.help-doel { outline-offset: -3px; }
+@media print { .helpbalk { display: none !important; } }

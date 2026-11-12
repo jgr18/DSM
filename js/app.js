@@ -6,7 +6,8 @@
   const inhoud = $('#inhoud');
 
   let m = M.laadLokaal() || M.leegModel();
-  const ui = { tab: 'activiteiten', sel: null, kenmerkenOpen: false, weergave: 'voorgesteld', analyseSel: null, impactId: null };
+  const ui = { tab: 'activiteiten', sel: null, kenmerkenOpen: false, weergave: 'voorgesteld', analyseSel: null, impactId: null, scenId: null, tearSel: null };
+  const SC = DSM.scenario; SC.zorgVoor(m);
 
   /* ---------- hulpfuncties ---------- */
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -58,7 +59,7 @@
   /* ---------- bestand ---------- */
   function heeftInhoud() { return m.activiteiten.length > 0; }
   function laadModel(nieuw, melding) {
-    m = nieuw; ui.sel = null; ui.analyseSel = null; ui.impactId = null;
+    m = nieuw; SC.zorgVoor(m); ui.sel = null; ui.analyseSel = null; ui.impactId = null; ui.scenId = null; ui.tearSel = null;
     M.bewaarLokaal(m); ui.tab = 'activiteiten'; render(); if (melding) toonOk(melding);
   }
   document.querySelector('.bestand').addEventListener('click', e => {
@@ -104,9 +105,10 @@
     const knop = $('#knop-analyse'); knop.disabled = true; knop.textContent = 'Bezig…';
     setTimeout(() => {
       m.analyse = AN.analyseer(m);
+      SC.berekenAlle(m);
       knop.disabled = false; knop.textContent = 'Analyse uitvoeren';
-      bewaar(); ui.tab = 'analyse'; ui.weergave = 'voorgesteld'; ui.analyseSel = null; render();
-      toonOk('Analyse uitgevoerd in ' + m.analyse.rekentijdMs + ' ms op invoerversie ' + m.analyse.invoerversie + '.');
+      bewaar(); if (ui.tab !== 'scenarios') { ui.tab = 'analyse'; ui.weergave = 'voorgesteld'; ui.analyseSel = null; } render();
+      toonOk('Analyse uitgevoerd in ' + m.analyse.rekentijdMs + ' ms op invoerversie ' + m.analyse.invoerversie + '.' + (m.scenarios.length ? ' Ook ' + m.scenarios.length + ' scenario(\'s) opnieuw berekend.' : ''));
     }, 20);
   }
 
@@ -213,7 +215,11 @@
           if (m.zelfiteraties.includes(r)) { klas += ' zelf'; txt = '↻'; titel += ' · zelfiteratie'; }
         } else {
           const rel = kaart[relSleutel(c, r)];
-          if (rel) {
+          const tearK = o.tears && o.tears[relSleutel(c, r)];
+          if (rel && tearK) {
+            klas = 'tear t-' + rel.soort + (tearK === 'open' ? ' tear-open' : ''); txt = '✂';
+            titel = 'Tear: ' + r + ' begint vóór ' + c + ' klaar is (' + SOORTEN[rel.soort].kort + ')' + (tearK === 'open' ? ' — B-tear niet afgestemd' : '') + '. In dit scenario telt de relatie niet mee.';
+          } else if (rel) {
             klas = 's-' + rel.soort; txt = rel.soort;
             if (o.markeerTerug && j > i) klas += ' fb';
             if (o.kenmerkStip && heeftKenmerk(rel)) klas += ' kenm';
@@ -326,13 +332,13 @@
   /* ---------- uitleg bij de relatiesoorten (en de overige legenda-items) ---------- */
   const UITLEG = {
     I: { wat: 'De ontvanger heeft gegevens of een resultaat van de leverancier nodig om zijn werk goed te kunnen doen. Zonder die informatie beginnen kan wel, maar dan is de kans groot dat er later werk opnieuw moet.',
-         analyse: 'Staat de leverancier later in de volgorde, dan is dit een terugkoppeling. De optimalisatie maakt het aantal en de lengte daarvan zo klein mogelijk.' },
+         analyse: 'Staat de leverancier later in de volgorde, dan is dit een terugkoppeling. De optimalisatie maakt het aantal en de lengte daarvan zo klein mogelijk. Een tear mag, maar met kans op herstelwerk.' },
     H: { wat: 'De ontvanger kan pas beginnen als de leverancier klaar is. Er is geen omweg: het is een fysieke, technische of formele voorwaarde. Voorbeeld: een prototype testen kan pas als het gebouwd is.',
-         analyse: 'Hoogste prioriteit: de leverancier komt altijd eerst. Een kring van alleen harde voorwaarden kan niet en wordt gemeld als tegenspraak.' },
+         analyse: 'Hoogste prioriteit: de leverancier komt altijd eerst. Een kring van alleen harde voorwaarden kan niet en wordt gemeld als tegenspraak. Een tear is niet toegestaan.' },
     B: { wat: 'De leverancier legt grenzen of eisen vast die het werk van de ontvanger beschermen, bijvoorbeeld veiligheids-, kwaliteits- of normeisen. De ontvanger kan werken, maar moet binnen die grenzen blijven. Verandert de leverancier iets, dan controleert de ontvanger of zijn resultaat nog klopt.',
-         analyse: 'Telt in deze versie als een gewone afhankelijkheid, net als Informatie.' },
+         analyse: 'Telt in de berekening als een gewone afhankelijkheid, net als Informatie. Een tear mag pas na afstemming met wie de grenzen stelt.' },
     A: { wat: 'Net als bij Informatie heeft de ontvanger deze informatie nodig. Staat de leverancier eerder in de volgorde, dan wacht je gewoon op de echte informatie en verandert er niets. Het verschil telt pas als de relatie een terugkoppeling wordt: de ontvanger moet dan beginnen vóórdat de leverancier klaar is. Met A leg je vooraf vast dat dat mag, met een zo goed mogelijke aanname die later wordt gecontroleerd.',
-         analyse: 'Telt nu als een gewone afhankelijkheid. Bij Scenario\'s & tears (volgende versie) zijn dit de terugkoppelingen die je het eerst bewust kunt doorbreken.' },
+         analyse: 'Telt nu als een gewone afhankelijkheid. Bij Scenario\'s & tears zijn dit de terugkoppelingen die je het eerst bewust kunt doorbreken (tear).' },
     Z: { titel: 'Zelfiteratie', chip: '<span class="chip zelf">↻</span>',
          wat: 'De activiteit is zelf een lus: ze gebruikt haar eigen uitkomst als nieuwe invoer, en vooraf weet je niet hoeveel rondes het worden. Voorbeelden: testen, aanpassen en opnieuw testen; berekenen en optimaliseren. Een taak die alleen lang duurt, is geen zelfiteratie. Loopt de lus via een andere activiteit (bijvoorbeeld een akkoord van de klant), leg dan relaties tussen die activiteiten vast.',
          analyse: 'Verandert de volgorde niet, maar reken bij deze activiteit op herhaling en een onzekere doorlooptijd.',
@@ -343,6 +349,9 @@
     K: { titel: 'Iteratieblok', chip: '<span class="chip blokm"></span>',
          wat: 'Een groep activiteiten die via een kring van relaties van elkaar afhangen. Geen van hen kan helemaal eerst. Het kader in de matrix laat zien waar het blok staat.',
          analyse: 'Gevonden met het algoritme van Tarjan. Binnen het blok wordt de beste volgorde gezocht. Het is geen advies om de activiteiten samen te voegen.' },
+    X: { titel: 'Tear', chip: '<span class="chip tearm">✂</span>',
+         wat: 'Een terugkoppeling die in dit scenario bewust is doorbroken: de ontvanger begint met een vastgelegde aanname, die op het controlemoment wordt gecontroleerd. De oorspronkelijke relatie blijft in het basismodel staan. Een oranje ✂ is een B-tear die nog niet is afgestemd.',
+         analyse: 'Telt in dit scenario niet mee voor de iteratieblokken en de volgorde. A: tear mag. I: mag, met kans op herstelwerk. B: eerst afstemmen. H: niet toegestaan.' },
     M: { titel: 'Aanvullende kenmerken', chip: '<span class="chip" style="border:1px solid #C9C9C4;position:relative"><span style="position:absolute;right:1px;top:1px;width:5px;height:5px;border-radius:50%;background:#1F2328"></span></span>',
          wat: 'Bij deze relatie zijn zekerheid, frequentie of bron ingevuld.', analyse: 'Deze kenmerken tellen niet mee in de optimalisatie; ze zijn voor de controleerbaarheid.' }
   };
@@ -361,6 +370,8 @@
   }
   function uitlegStandaard() {
     if (ui.sel && ui.sel.van === ui.sel.naar) return bouwUitleg('Z');
+    const gr = ui.sel && M.vindRelatie(m, ui.sel.van, ui.sel.naar);
+    if (gr) return bouwUitleg(gr.soort);
     return '<h2>Uitleg relatiesoorten</h2><p class="klein">Wijs een soort aan in de legenda boven de matrix of bij <b>Geselecteerde cel</b> voor de volledige uitleg.</p>' + vergelijkTabel(null) +
       '<p class="klein"><span class="chip zelf" style="vertical-align:middle;margin-right:6px">↻</span><b>Zelfiteratie:</b> klik een grijs vakje op de diagonaal en druk op de <b>spatiebalk</b>.</p>';
   }
@@ -369,7 +380,7 @@
       const p = $('#uitlegpaneel'); if (!p) return;
       p.innerHTML = k ? bouwUitleg(k) : uitlegStandaard();
       p.classList.toggle('actief', !!k);
-    } else if (ui.tab === 'analyse') {
+    } else if (ui.tab === 'analyse' || ui.tab === 'scenarios') {
       const pop = $('#uitlegpop'); if (!pop) return;
       if (!k) { pop.hidden = true; return; }
       pop.innerHTML = bouwUitleg(k); pop.hidden = false;
@@ -394,7 +405,7 @@
     return '<div class="legendakader"><div class="legenda" aria-label="Legenda; wijs een item aan voor uitleg">' +
       Object.keys(SOORTEN).map(k => item(k, '<span class="chip ' + k + '">' + k + '</span>', SOORTEN[k].kort)).join('') +
       item('Z', UITLEG.Z.chip, 'Zelfiteratie') +
-      (analyse ? item('T', UITLEG.T.chip, 'Terugkoppeling (boven diagonaal)') + item('K', UITLEG.K.chip, 'Iteratieblok')
+      (analyse ? item('T', UITLEG.T.chip, 'Terugkoppeling (boven diagonaal)') + item('K', UITLEG.K.chip, 'Iteratieblok') + (analyse === 'scenario' ? item('X', UITLEG.X.chip, 'Tear') : '')
                : item('M', UITLEG.M.chip, 'Aanvullende kenmerken ingevuld')) +
       '<span class="legenda-hint">ⓘ wijs aan voor uitleg</span></div>' +
       (analyse ? '<div id="uitlegpop" class="uitlegpop" role="tooltip" hidden></div>' : '') + '</div>';
@@ -461,7 +472,7 @@
     if (!ui.sel || ui.sel.van === ui.sel.naar) return;
     if (soort) { const f = M.zetRelatie(m, ui.sel.van, ui.sel.naar, soort); if (f) { toonFouten([f]); return; } }
     else M.wisRelatie(m, ui.sel.van, ui.sel.naar);
-    na(); vernieuwRelCel(); renderRelPaneel();
+    na(); vernieuwRelCel(); renderRelPaneel(); toonUitleg(null);
   }
 
   inhoud.addEventListener('click', e => {
@@ -570,7 +581,7 @@
       (r.zekerheid ? '<dt>Zekerheid</dt><dd>' + esc(r.zekerheid) + '</dd>' : '') + (r.frequentie ? '<dt>Frequentie</dt><dd>' + esc(r.frequentie) + '</dd>' : '') + (r.bron ? '<dt>Bron</dt><dd>' + esc(r.bron) + '</dd>' : '') +
       '<dt>Positie</dt><dd>' + (d > 0 ? 'Terugkoppeling · afstand ' + d + (wissel ? ' · wisseling van verantwoordelijke' : '') : 'Vooruitkoppeling') + '</dd>' +
       '<dt>Blok</dt><dd>' + (bv && bv === bw ? 'Binnen ' + bv : (bv || '?') + ' → ' + (bw || '?')) + '</dd></dl>' +
-      (d > 0 ? '<p class="klein">Een tear voorbereiden vanuit deze relatie komt in het tabblad Scenario\'s &amp; tears (volgende versie).</p>' : '');
+      (d > 0 ? (r.soort === 'H' ? '<p class="klein">Een harde voorwaarde kan niet worden doorbroken met een tear.</p>' : '<button class="knop" data-naar-tear>✂ Tear maken in scenario…</button><p class="klein">Opent het tabblad Scenario\'s &amp; tears met deze relatie.</p>') : '');
     p.innerHTML = h;
   }
 
@@ -579,6 +590,11 @@
     if (ui.tab !== 'analyse') return;
     const w = e.target.closest('[data-weergave]');
     if (w) { ui.weergave = w.dataset.weergave; renderAnalyse(); return; }
+    if (e.target.closest('[data-naar-tear]') && ui.analyseSel) {
+      if (!m.scenarios.length) { SC.bereken(m, SC.nieuwScenario(m, 'Scenario 1')); }
+      if (!SC.vindScenario(m, ui.scenId)) ui.scenId = m.scenarios[m.scenarios.length - 1].id;
+      ui.tearSel = { van: ui.analyseSel.van, naar: ui.analyseSel.naar }; na(); naarTab('scenarios'); return;
+    }
     const td = e.target.closest('#ak td');
     if (td) {
       const a = m.analyse, volg = huidigeVolgorde(ui.weergave === 'voorgesteld' ? a.volgorde : m.activiteiten.map(x => x.id));
@@ -640,12 +656,168 @@
     if (ui.tab === 'vergelijking' && e.target.id === 'impact-keus') { ui.impactId = e.target.value; renderVergelijking(); }
   });
 
-  /* ================= SCENARIO'S EN RAPPORT ================= */
+  /* ================= SCENARIO'S EN TEARS ================= */
+  const huidigScenario = () => SC.vindScenario(m, ui.scenId) || m.scenarios[0] || null;
+  const optie = (w, t, sel) => '<option value="' + esc(w) + '"' + (w === sel ? ' selected' : '') + '>' + esc(t) + '</option>';
+
   function renderScenarios() {
-    inhoud.innerHTML = '<section class="paneel breed"><h2>Scenario\'s &amp; tears</h2><p class="uitleg">Dit onderdeel volgt in de volgende versie:</p><ul class="uitleg">' +
-      '<li>scenario\'s maken op basis van een bestaand scenario, kiezen uit een lijst;</li><li>vanuit een terugkoppeling in DSM analyse een tear voorbereiden;</li>' +
-      '<li>per tear: aanname, verantwoordelijke, controlemoment en gevolgen; de oorspronkelijke relatie blijft bewaard;</li><li>per scenario cycli en volgorde opnieuw berekenen en vergelijken met de basis.</li></ul></section>';
+    const a = m.analyse; if (!a) return geenAnalyse();
+    SC.zorgVoor(m);
+    if (!m.scenarios.length) {
+      inhoud.innerHTML = '<section class="paneel breed" style="max-width:760px"><h2>Scenario\'s &amp; tears</h2>' +
+        '<p class="uitleg">Met een <b>tear</b> doorbreek je in een scenario bewust een terugkoppeling: de ontvanger begint met een aanname, en die wordt op een afgesproken moment gecontroleerd. De oorspronkelijke relatie blijft in het basismodel staan; alleen in het scenario telt hij niet mee. Zo zie je wat er met de iteratieblokken en de volgorde gebeurt.</p>' +
+        '<ul class="uitleg" style="margin:0;padding-left:18px"><li><b>A</b> aanname toegestaan: tear mag, vastleggen volstaat.</li><li><b>I</b> informatie: tear mag, met kans op herstelwerk.</li><li><b>B</b> bescherming: eerst afstemmen met wie de grenzen stelt.</li><li><b>H</b> harde voorwaarde: niet toegestaan.</li></ul>' +
+        '<div class="rij"><button class="knop primair" data-sc="nieuw">Eerste scenario maken</button></div></section>';
+      return;
+    }
+    const s = huidigScenario(); ui.scenId = s.id;
+    if (!s.analyse) { SC.bereken(m, s); bewaar(); }
+    const st = SC.status(m, s), sa = s.analyse;
+    const volg = huidigeVolgorde(sa.volgorde), bi = blokInfo(sa);
+    const oord = SC.beoordeel(m, s);
+    const tearKaart = {}; oord.filter(b => b.geldig).forEach(b => { tearKaart[relSleutel(b.tear.van, b.tear.naar)] = b.letop.some(l => l.code === 'b-open') ? 'open' : 'ok'; });
+    const mt = AN.maten(SC.scenarioModel(m, s), volg);
+    const sv = SC.samenvatting(m, s);
+    const kaarten = m.scenarios.map(x => {
+      const z = x.analyse ? SC.samenvatting(m, x) : null;
+      return '<button class="scen-kaart" data-sc-kies="' + x.id + '" aria-pressed="' + (x.id === s.id) + '"><b>' + x.id + ' ' + esc(x.naam) + '</b><span>' + (z ? z.tears + ' tear(s) · ' + z.terugkoppelingen + ' terugk.' : 'nog niet berekend') + (z && z.bOpen ? ' · <em>' + z.bOpen + ' B open</em>' : '') + '</span></button>';
+    }).join('');
+    inhoud.innerHTML =
+      '<section class="kolom breed">' + verouderdBalk() +
+        (st.status === 'verouderd' ? '<div class="balk-let rij tussen"><span><b>' + esc(st.tekst) + '.</b> De getoonde uitkomst is berekend vóór die wijziging.</span><button class="knop" data-sc="herbereken">Opnieuw berekenen</button></div>' : '') +
+        '<div class="paneel"><div class="rij tussen"><div class="rij scen-rij"><span class="klein"><b>Scenario</b></span><span class="kaart-basis"><b>Basis</b><span>0 tears · ' + a.matenVoorgesteld.terugkoppelingen + ' terugk.</span></span>' + kaarten + '</div>' +
+        '<div class="rij"><label class="verborgen" for="sc-bron">Nieuw scenario op basis van</label><select id="sc-bron">' + optie('', 'Nieuw: leeg', '') + m.scenarios.map(x => optie(x.id, 'Nieuw: kopie van ' + x.id, '')).join('') + '</select><button class="knop" data-sc="nieuw">+ Nieuw scenario</button></div></div></div>' +
+        '<div class="paneel"><div class="rij tussen"><div class="rij"><label class="verborgen" for="sc-naam">Naam van het scenario</label><span class="celkop">' + s.id + '</span><input id="sc-naam" data-sc-naam value="' + esc(s.naam) + '" style="min-width:260px">' +
+          '<button class="knop" data-sc="kopie">Kopie maken</button><button class="knop gevaar" data-sc="weg">Verwijderen</button></div>' +
+          '<div class="rij"><span class="maat">Tears <b>' + sv.tears + '</b></span><span class="maat">Terugkoppelingen <b>' + mt.terugkoppelingen + '</b></span><span class="maat">Totale afstand <b>' + mt.totaleAfstand + '</b></span><span class="maat">Iteratieblokken <b>' + sv.blokken + '</b></span>' + (sv.bOpen ? '<span class="maat open">B-tears niet afgestemd <b>' + sv.bOpen + '</b></span>' : '') + '</div></div>' +
+          legenda('scenario') +
+          '<div class="matrixkader" id="sk">' + bouwMatrix(volg, { blokKolom: true, blokVan: bi.blokVan, grootBlok: bi.grootBlok, markeerTerug: true, tears: tearKaart }) + '</div>' +
+          '<p class="klein">Klik een terugkoppeling (rode rand) om er een tear van te maken, of een ✂-vakje om de tear te bekijken of te wijzigen. De matrix toont de voorgestelde volgorde van dit scenario.</p></div>' +
+        vergelijkPaneel(s) +
+      '</section>' +
+      '<aside class="kolom smal"><div class="paneel" id="tear-paneel"></div>' + tearLijst(s, oord) + '</aside>';
+    if (ui.tearSel) { const i = volg.indexOf(ui.tearSel.naar), j = volg.indexOf(ui.tearSel.van); if (i >= 0 && j >= 0) markeerSelectie($('#sk table'), i, j); }
+    richtMatrixIn($('#sk'), volg, sa.blokken);
+    renderTearPaneel(s, volg);
   }
+
+  function tearLijst(s, oord) {
+    const rij = b => {
+      const t = b.tear, so = b.soort || '?';
+      const labels = b.fouten.map(f => '<span class="label-fout">' + esc(f.melding) + '</span>').join('') +
+        b.letop.map(l => '<span class="' + (l.code === 'b-open' ? 'label-let' : 'label-info') + '">' + esc(l.tekst) + '</span>').join('');
+      return '<button class="tear-item' + (ui.tearSel && ui.tearSel.van === t.van && ui.tearSel.naar === t.naar ? ' actief' : '') + '" data-tear-kies="' + t.van + '>' + t.naar + '">' +
+        '<span class="rij" style="gap:6px"><span class="chip ' + (b.soort || 'leeg') + '">' + so + '</span><b class="mono">' + t.van + ' → ' + t.naar + '</b></span>' +
+        '<span class="klein">Aanname: ' + esc(t.aanname) + '</span>' +
+        '<span class="klein">' + (t.controleNa ? 'Controle na ' + t.controleNa + ' ' + esc(naam(t.controleNa)) : 'Geen controlemoment') + (t.verantwoordelijke ? ' · ' + esc(t.verantwoordelijke) : '') + '</span>' +
+        (labels ? '<span class="rij" style="gap:4px">' + labels + '</span>' : '') + '</button>';
+    };
+    return '<div class="paneel"><h3>Tears in dit scenario (' + oord.length + ')</h3>' + (oord.length ? oord.map(rij).join('') : '<p class="klein">Nog geen tears. Klik een terugkoppeling in de matrix.</p>') + '</div>';
+  }
+
+  function renderTearPaneel(s, volg) {
+    const p = $('#tear-paneel'); if (!p) return;
+    if (!ui.tearSel) {
+      p.innerHTML = '<h2>Tear</h2><p class="uitleg">Klik een terugkoppeling in de matrix om een tear te maken. Een tear legt vast dat de ontvanger begint met een aanname, wie daarvoor verantwoordelijk is en wanneer de aanname wordt gecontroleerd.</p>';
+      return;
+    }
+    const { van, naar } = ui.tearSel, r = M.vindRelatie(m, van, naar), t = SC.vindTear(s, van, naar);
+    let h = '<div class="rij tussen"><h2>' + (t ? 'Tear bewerken' : 'Tear maken') + '</h2><span class="celkop">' + van + ' → ' + naar + '</span></div>';
+    if (!r) { p.innerHTML = h + '<p class="uitleg">Er is geen relatie in deze cel.</p>' + (t ? '<button class="knop gevaar" data-sc="tear-weg">Tear verwijderen</button>' : ''); return; }
+    const f = SC.magTearen(m, van, naar);
+    if (f) { p.innerHTML = h + '<div class="melding fout" style="margin:0"><div><b>Niet toegestaan.</b> ' + esc(f.melding) + ' <b>Herstel:</b> ' + esc(f.herstel) + '</div></div>' + (t ? '<button class="knop gevaar" data-sc="tear-weg">Tear verwijderen</button>' : ''); return; }
+    const d = volg.indexOf(van) - volg.indexOf(naar);
+    if (!t && d <= 0) { p.innerHTML = h + '<p class="uitleg">In dit scenario staat ' + van + ' al vóór ' + naar + '. Dit is geen terugkoppeling, dus een tear is niet nodig.</p>'; return; }
+    const av = act(van), aw = act(naar);
+    const w = t || { aanname: r.soort === 'A' && r.info ? r.info + ': ' : '', verantwoordelijke: aw.eigenaar || '', controleNa: van, gevolgen: '', afgestemdMet: av.eigenaar || '', afgestemd: false };
+    const eigenaars = [...new Set(m.activiteiten.map(x => x.eigenaar).filter(Boolean))];
+    const soortNoot = {
+      A: '<div><span class="label-ok">Aanname vooraf toegestaan — vastleggen volstaat</span></div>',
+      I: '<div class="balk-let"><b>Informatie-tear.</b> Hier is niet vooraf afgesproken dat beginnen met een aanname mag. Er is kans op herstelwerk bij ' + naar + '. Leg de aanname en het controlemoment daarom goed vast.</div>',
+      B: '<div class="balk-let"><b>Bescherming.</b> ' + van + ' stelt grenzen waarbinnen ' + naar + ' moet blijven. Stem eerst af met wie die grenzen stelt. Zonder afstemming rekent de tear wel mee, maar blijft hij als open punt staan.</div>'
+    }[r.soort];
+    h += '<p class="uitleg"><b>' + naar + ' ' + esc(aw.naam) + '</b> begint vóór <b>' + van + ' ' + esc(av.naam) + '</b> klaar is.</p>' +
+      '<p class="klein">Soort: <span class="chip ' + r.soort + '" style="vertical-align:middle">' + r.soort + '</span> ' + SOORTEN[r.soort].kort + (r.info ? ' · ' + esc(r.info) : '') + (d > 0 ? ' · terugkoppeling, afstand ' + d : '') + '</p>' + soortNoot +
+      '<label class="veld">Aanname waarmee ' + naar + ' werkt<textarea rows="2" data-tv="aanname" placeholder="Bijv. staal S235, E = 210 GPa">' + esc(w.aanname) + '</textarea></label>' +
+      '<label class="veld">Verantwoordelijke voor de aanname<input data-tv="verantwoordelijke" list="eigenaars" value="' + esc(w.verantwoordelijke) + '"></label>' +
+      '<datalist id="eigenaars">' + eigenaars.map(x => '<option value="' + esc(x) + '">').join('') + '</datalist>' +
+      '<label class="veld">Controlemoment<select data-tv="controleNa">' + optie('', '— geen —', w.controleNa) + m.activiteiten.map(x => optie(x.id, 'Na afronding van ' + x.id + ' ' + x.naam, w.controleNa)).join('') + '</select></label>' +
+      '<label class="veld">Gevolgen als de aanname niet klopt<textarea rows="2" data-tv="gevolgen" placeholder="Bijv. ' + naar + ' opnieuw uitvoeren">' + esc(w.gevolgen) + '</textarea></label>' +
+      (r.soort === 'B' ? '<div class="raster2"><label class="veld">Afgestemd met<input data-tv="afgestemdMet" list="eigenaars" value="' + esc(w.afgestemdMet) + '"></label>' +
+        '<label class="veld">Status<select data-tv="afgestemd">' + optie('nee', 'Nog niet afgestemd', w.afgestemd ? 'ja' : 'nee') + optie('ja', 'Afgestemd', w.afgestemd ? 'ja' : 'nee') + '</select></label></div>' : '') +
+      '<p class="klein">De oorspronkelijke relatie blijft in het basismodel bewaard.</p>' +
+      '<div class="rij"><button class="knop primair" data-sc="tear-opslaan">Tear opslaan</button>' + (t ? '<button class="knop gevaar" data-sc="tear-weg">Tear verwijderen</button>' : '') + '<button class="knop" data-sc="tear-annuleer">Sluiten</button></div>';
+    p.innerHTML = h;
+  }
+
+  function vergelijkPaneel(s) {
+    const a = m.analyse, bv = a.blokken.filter(b => b.leden.length > 1);
+    const kol = m.scenarios.map(x => ({ x, z: x.analyse ? SC.samenvatting(m, x) : null, st: SC.status(m, x) }));
+    const kop = '<th>Maat</th><th class="num">Basis</th>' + kol.map(k => '<th class="num' + (k.x.id === s.id ? ' huidig' : '') + '">' + k.x.id + (k.st.status === 'verouderd' ? ' <span class="label-let" style="padding:1px 5px">verouderd</span>' : '') + '</th>').join('');
+    const rij = (label, basis, f, klein) => '<tr><td>' + label + '</td><td class="num">' + basis + '</td>' + kol.map(k => '<td class="num' + (k.x.id === s.id ? ' huidig' : '') + '">' + (k.z ? f(k.z) : '—') + '</td>').join('') + '</tr>' + (klein ? '<tr class="sub"><td></td><td class="num klein">' + klein[0] + '</td>' + kol.map(k => '<td class="num klein' + (k.x.id === s.id ? ' huidig' : '') + '">' + (k.z ? klein[1](k.z) : '') + '</td>').join('') + '</tr>' : '');
+    const bOrd = a.volgorde, sOrd = s.analyse.volgorde;
+    const verschoven = sOrd.map((id, i) => ({ id, van: bOrd.indexOf(id) + 1, naar: i + 1 })).filter(x => x.van !== x.naar);
+    return '<div class="paneel"><div class="rij tussen"><h2>Vergelijken met de basis</h2><span class="klein">Basis = DSM analyse zonder tears</span></div><div class="tabelkader"><table class="lijst vergelijk-sc"><thead><tr>' + kop + '</tr></thead><tbody>' +
+      rij('Tears', 0, z => z.tears + (z.ongeldig ? ' <span class="label-fout" style="padding:1px 5px">' + z.ongeldig + ' ongeldig</span>' : '')) +
+      rij('Terugkoppelingen', a.matenVoorgesteld.terugkoppelingen, z => z.terugkoppelingen) +
+      rij('… met wisseling van verantwoordelijke', a.matenVoorgesteld.metWissel, z => z.metWissel) +
+      rij('Totale terugkoppelafstand', a.matenVoorgesteld.totaleAfstand, z => z.totaleAfstand) +
+      rij('Iteratieblokken (≥ 2 activiteiten)', bv.length, z => z.blokken, [bv.map(b => b.leden.join(', ')).join(' · ') || '—', z => z.blokTekst.join(' · ') || '—']) +
+      rij('Activiteiten in grootste blok', a.grootsteBlok, z => z.grootsteBlok) +
+      rij('B-tears niet afgestemd', '—', z => z.bOpen ? '<b style="color:#8A4B00">' + z.bOpen + '</b>' : 0) +
+      rij('Controlemomenten vastgelegd', '—', z => z.controles) +
+      '</tbody></table></div>' +
+      '<p class="klein"><b>Volgorde van ' + s.id + ' tegenover de basis:</b> ' + (verschoven.length ? verschoven.map(x => '<span class="mono">' + x.id + '</span> ' + x.van + ' → ' + x.naar).join(' · ') : 'zelfde volgorde als de basis.') + '</p>' +
+      '<p class="klein">Ook hier gaat het om structurele maten, niet om uren of doorlooptijd.</p></div>';
+  }
+
+  function leesTearForm() {
+    const g = { van: ui.tearSel.van, naar: ui.tearSel.naar };
+    document.querySelectorAll('#tear-paneel [data-tv]').forEach(el => { g[el.dataset.tv] = el.dataset.tv === 'afgestemd' ? el.value === 'ja' : el.value; });
+    return g;
+  }
+
+  inhoud.addEventListener('click', e => {
+    if (ui.tab !== 'scenarios') return;
+    const kies = e.target.closest('[data-sc-kies]');
+    if (kies) { ui.scenId = kies.dataset.scKies; ui.tearSel = null; renderScenarios(); return; }
+    const tk = e.target.closest('[data-tear-kies]');
+    if (tk) { const [van, naar] = tk.dataset.tearKies.split('>'); ui.tearSel = { van, naar }; renderScenarios(); return; }
+    const td = e.target.closest('#sk td');
+    if (td) {
+      const s = huidigScenario(), volg = huidigeVolgorde(s.analyse.volgorde), i = +td.dataset.i, j = +td.dataset.j;
+      if (i === j || !M.vindRelatie(m, volg[j], volg[i])) return;
+      ui.tearSel = { van: volg[j], naar: volg[i] };
+      markeerSelectie($('#sk table'), i, j); renderTearPaneel(s, volg); return;
+    }
+    const b = e.target.closest('[data-sc]'); if (!b) return;
+    const actie = b.dataset.sc, s = huidigScenario();
+    if (actie === 'nieuw') {
+      const bron = $('#sc-bron') ? $('#sc-bron').value : '';
+      const n = SC.nieuwScenario(m, bron ? '' : 'Scenario ' + m.volgendeScenario, bron || null);
+      SC.bereken(m, n); ui.scenId = n.id; ui.tearSel = null; na(); renderScenarios(); toonOk('Scenario ' + n.id + ' gemaakt' + (bron ? ' als kopie van ' + bron : '') + '.');
+    } else if (actie === 'kopie') {
+      const n = SC.nieuwScenario(m, '', s.id); SC.bereken(m, n); ui.scenId = n.id; ui.tearSel = null; na(); renderScenarios(); toonOk('Kopie gemaakt: ' + n.id + '.');
+    } else if (actie === 'weg') {
+      if (!confirm('Scenario ' + s.id + ' "' + s.naam + '" verwijderen, met ' + s.tears.length + ' tear(s)? Het basismodel blijft ongewijzigd.')) return;
+      SC.verwijderScenario(m, s.id); ui.scenId = null; ui.tearSel = null; na(); renderScenarios();
+    } else if (actie === 'herbereken') {
+      SC.berekenAlle(m); na(); renderScenarios(); toonOk('Scenario\'s opnieuw berekend op invoerversie ' + m.invoerversie + '.');
+    } else if (actie === 'tear-opslaan') {
+      const f = SC.zetTear(m, s.id, leesTearForm());
+      if (f) { toonFouten([f]); return; }
+      wisMeldingen(); SC.bereken(m, s); na(); renderScenarios(); toonOk('Tear ' + ui.tearSel.van + ' → ' + ui.tearSel.naar + ' opgeslagen; ' + s.id + ' is opnieuw berekend.');
+    } else if (actie === 'tear-weg') {
+      const { van, naar } = ui.tearSel; SC.wisTear(m, s.id, van, naar); SC.bereken(m, s); ui.tearSel = null; na(); renderScenarios(); toonOk('Tear ' + van + ' → ' + naar + ' verwijderd.');
+    } else if (actie === 'tear-annuleer') {
+      ui.tearSel = null; renderScenarios();
+    }
+  });
+  inhoud.addEventListener('change', e => {
+    if (ui.tab === 'scenarios' && e.target.hasAttribute('data-sc-naam')) { SC.hernoem(m, ui.scenId, e.target.value); na(); renderScenarios(); }
+  });
+
+  /* ================= RAPPORT ================= */
   function renderRapport() {
     inhoud.innerHTML = '<section class="paneel breed"><h2>Rapportage</h2><p class="uitleg">Het opgemaakte rapport (PDF en Excel met handleiding) volgt in de volgende versie. Tot die tijd:</p><ul class="uitleg">' +
       '<li><b>Opslaan</b> rechtsboven bewaart het complete model met invoerversie, instellingen en analyse als .json-bestand;</li>' +
