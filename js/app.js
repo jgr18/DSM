@@ -191,23 +191,27 @@
   });
 
   /* ================= MATRIX (gedeeld) ================= */
-  /* Bouwt een DSM-tabel. Rij = ontvanger, kolom = leverancier. */
+  /* Bouwt een DSM-tabel. Rij = ontvanger, kolom = leverancier.
+     Rijen en kolommen krijgen een volgnummer (1, 2, 3 …) in de getoonde volgorde. */
   function bouwMatrix(volgorde, opties) {
     const kaart = relKaart(), o = opties || {};
     const blokVan = o.blokVan || {}, grootBlok = o.grootBlok || {};
+    const vijf = k => (k % 5 === 4 && k < volgorde.length - 1);
     let h = '<table class="dsm' + (o.blokKolom ? ' met-blok' : '') + '"><thead><tr>' +
       (o.blokKolom ? '<th class="blokkop">Blok</th>' : '') +
       '<th class="hoek">ontvanger ↓ · leverancier →</th>' +
-      volgorde.map((id, j) => '<th scope="col" data-j="' + j + '" title="' + esc(id + ' ' + naam(id)) + '">' + id + '</th>').join('') + '</tr></thead><tbody>';
+      volgorde.map((id, j) => '<th scope="col" data-j="' + j + '" class="' + (vijf(j) ? 'vijf-k' : '') + '" title="' + esc((j + 1) + ' · ' + id + ' ' + naam(id)) + '">' + (j + 1) + '</th>').join('') + '</tr></thead><tbody>';
     volgorde.forEach((r, i) => {
       const rb = blokVan[r], rGroot = rb && grootBlok[rb];
-      h += '<tr>';
+      h += '<tr' + (vijf(i) ? ' class="vijf-r"' : '') + '>';
       if (o.blokKolom) h += '<th class="blokcel' + (rGroot ? ' blok' : '') + '">' + (rb || '') + '</th>';
-      h += '<th scope="row" class="naamcel' + (rGroot ? ' blok' : '') + '" data-i="' + i + '" title="' + esc(r + ' ' + naam(r) + (act(r) && act(r).eigenaar ? ' · ' + act(r).eigenaar : '')) + '"><span class="id">' + r + '</span>' + esc(naam(r)) + '</th>';
+      h += '<th scope="row" class="naamcel' + (rGroot ? ' blok' : '') + '" data-i="' + i + '" title="' + esc((i + 1) + ' · ' + r + ' ' + naam(r) + (act(r) && act(r).eigenaar ? ' · ' + act(r).eigenaar : '')) + '"><span class="nr">' + (i + 1) + '</span><span class="id">' + r + '</span>' + esc(naam(r)) + '</th>';
       volgorde.forEach((c, j) => {
         let klas = '', txt = '', titel = '';
-        if (r === c) { klas = 'diag'; if (m.zelfiteraties.includes(r)) { txt = '↻'; titel = r + ' zelfiteratie'; } }
-        else {
+        if (r === c) {
+          klas = 'diag'; txt = String(i + 1); titel = (i + 1) + ' · ' + r + ' ' + naam(r);
+          if (m.zelfiteraties.includes(r)) { klas += ' zelf'; txt = '↻'; titel += ' · zelfiteratie'; }
+        } else {
           const rel = kaart[relSleutel(c, r)];
           if (rel) {
             klas = 's-' + rel.soort; txt = rel.soort;
@@ -217,23 +221,86 @@
           } else if (rGroot && blokVan[c] === rb) klas = 'blok';
           else if (o.markeerTerug && j > i) klas = 'boven';
         }
-        h += '<td data-i="' + i + '" data-j="' + j + '" class="' + klas + '"' + (titel ? ' title="' + esc(titel) + '"' : '') + '>' + txt + '</td>';
+        if (vijf(j)) klas += ' vijf-k';
+        h += '<td data-i="' + i + '" data-j="' + j + '" class="' + klas.trim() + '"' + (titel ? ' title="' + esc(titel) + '"' : '') + '>' + txt + '</td>';
       });
       h += '</tr>';
     });
     return h + '</tbody></table>';
   }
 
-  function celEl(tabel, i, j, offset) { const rij = tabel.tBodies[0].rows[i]; return rij ? rij.cells[j + offset] : null; }
-  function markeerSelectie(tabel, i, j, offset) {
-    tabel.querySelectorAll('.gekozen').forEach(x => x.classList.remove('gekozen'));
-    tabel.querySelectorAll('.gekozen-kop').forEach(x => x.classList.remove('gekozen-kop'));
+  function celEl(tabel, i, j) { return tabel.querySelector('td[data-i="' + i + '"][data-j="' + j + '"]'); }
+  function rijKop(tabel, i) { return tabel.querySelector('tbody th.naamcel[data-i="' + i + '"]'); }
+  function kolomKop(tabel, j) { return tabel.querySelector('thead th[data-j="' + j + '"]'); }
+
+  /* Licht de kolomkop, de rij van de ontvanger én de rij van de leverancier op,
+     zodat je bij een kolomnummer meteen de naam van de activiteit ziet. */
+  function zetKoppen(tabel, i, j, klas) {
+    const rol = klas === 'gekozen-kop';
+    tabel.querySelectorAll('.' + klas).forEach(x => { x.classList.remove(klas); if (rol) x.classList.remove('lev', 'ontv'); });
     if (i == null) return;
-    const td = celEl(tabel, i, j, offset); if (td) td.classList.add('gekozen');
-    const kol = tabel.tHead.rows[0].cells[j + offset]; if (kol) kol.classList.add('gekozen-kop');
-    const rk = tabel.tBodies[0].rows[i].cells[offset - 1]; if (rk) rk.classList.add('gekozen-kop');
-    if (td) td.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    const kol = kolomKop(tabel, j); if (kol) kol.classList.add(klas);
+    const ro = rijKop(tabel, i); if (ro) { ro.classList.add(klas); if (rol && i !== j) ro.classList.add('ontv'); }
+    const rl = rijKop(tabel, j); if (rl && i !== j) { rl.classList.add(klas); if (rol) rl.classList.add('lev'); }
   }
+  function markeerSelectie(tabel, i, j) {
+    if (!tabel) return;
+    tabel.querySelectorAll('td.gekozen').forEach(x => x.classList.remove('gekozen'));
+    zetKoppen(tabel, i, j, 'gekozen-kop');
+    if (i == null) return;
+    const td = celEl(tabel, i, j); if (td) { td.classList.add('gekozen'); td.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
+  }
+  function markeerWijzen(tabel, i, j) {
+    tabel.querySelectorAll('td.aangewezen').forEach(x => x.classList.remove('aangewezen'));
+    zetKoppen(tabel, i, j, 'wijs-kop');
+    if (i == null) return;
+    const td = celEl(tabel, i, j); if (td && !td.classList.contains('gekozen')) td.classList.add('aangewezen');
+  }
+
+  /* Punt 7: celgrootte groeit mee met de beschikbare ruimte (tussen 22 en 40 px). */
+  function pasCelAan(kader) {
+    const tabel = kader && kader.querySelector('table.dsm'); if (!tabel) return;
+    const n = tabel.tHead.rows[0].querySelectorAll('th[data-j]').length; if (!n) return;
+    let labels = 0; tabel.tHead.rows[0].querySelectorAll('th:not([data-j])').forEach(th => { labels += th.offsetWidth; });
+    const ruimte = kader.clientWidth - labels - 2;
+    const cel = Math.max(22, Math.min(40, Math.floor(ruimte / n)));
+    tabel.style.setProperty('--cel', cel + 'px');
+    tabel.style.setProperty('--celtekst', (cel >= 34 ? 13 : cel >= 28 ? 12 : 11) + 'px');
+  }
+  /* Punt 1: kader om elk iteratieblok dat in de getoonde volgorde aaneengesloten staat. */
+  function tekenBlokkaders(kader, volg, blokken) {
+    kader.querySelectorAll('.blokkader').forEach(x => x.remove());
+    const tabel = kader.querySelector('table.dsm'); if (!tabel || !blokken) return;
+    blokken.filter(b => b.leden.length > 1).forEach(b => {
+      const pos = b.leden.map(id => volg.indexOf(id)).filter(x => x >= 0).sort((x, y) => x - y);
+      if (!pos.length || pos[pos.length - 1] - pos[0] !== pos.length - 1) return; // niet aaneengesloten: alleen tint
+      const a = celEl(tabel, pos[0], pos[0]), z = celEl(tabel, pos[pos.length - 1], pos[pos.length - 1]); if (!a || !z) return;
+      const d = document.createElement('div'); d.className = 'blokkader'; d.title = b.id + ' · iteratieblok';
+      const x0 = tabel.offsetLeft + a.offsetLeft, y0 = tabel.offsetTop + a.offsetTop;
+      d.style.left = (x0 - 1) + 'px'; d.style.top = (y0 - 1) + 'px';
+      d.style.width = (z.offsetLeft + z.offsetWidth - a.offsetLeft + 2) + 'px';
+      d.style.height = (z.offsetTop + z.offsetHeight - a.offsetTop + 2) + 'px';
+      kader.appendChild(d);
+    });
+  }
+  let naRender = null;
+  function richtMatrixIn(kader, volg, blokken) {
+    if (!kader) return;
+    pasCelAan(kader); tekenBlokkaders(kader, volg, blokken);
+    naRender = () => { pasCelAan(kader); tekenBlokkaders(kader, volg, blokken); };
+  }
+  let rsz = null;
+  window.addEventListener('resize', () => { clearTimeout(rsz); rsz = setTimeout(() => { if (naRender && document.body.contains(document.querySelector('.matrixkader'))) naRender(); }, 80); });
+
+  /* Aanwijzen met de muis (beide matrixen). */
+  inhoud.addEventListener('mouseover', e => {
+    const td = e.target.closest('.matrixkader td'); if (!td) return;
+    markeerWijzen(td.closest('table'), +td.dataset.i, +td.dataset.j);
+  });
+  inhoud.addEventListener('mouseout', e => {
+    const kader = e.target.closest('.matrixkader'); if (!kader) return;
+    if (!e.relatedTarget || !kader.contains(e.relatedTarget) || !e.relatedTarget.closest('td')) { const t = kader.querySelector('table'); if (t) markeerWijzen(t, null); }
+  });
 
   /* ================= RELATIES ================= */
   function relVolgorde() { return m.activiteiten.map(a => a.id); }
@@ -243,22 +310,94 @@
     const zonderInfo = m.relaties.filter(r => !r.info).length;
     inhoud.innerHTML =
       '<section class="paneel breed"><div class="rij tussen"><div><h2>Relaties vastleggen in de matrix</h2>' +
-      '<p class="uitleg">Klik in de rij van de <b>ontvanger</b> op de kolom van de <b>leverancier</b>. Lege cel = geen relatie.</p></div></div>' +
+      '<p class="uitleg">Klik in de rij van de <b>ontvanger</b> op de kolom van de <b>leverancier</b>. Lege cel = geen relatie. Een <b>zelfiteratie</b> zet je aan of uit met de <b>spatiebalk</b> op een grijs vakje van de diagonaal.</p></div></div>' +
       legenda(false) +
       '<div class="matrixkader" id="mk" tabindex="0" aria-label="Relatiematrix. Pijltjes verplaatsen, I H B A kiest soort, Delete wist, Enter gaat naar de volgende cel.">' + bouwMatrix(relVolgorde(), { kenmerkStip: true }) + '</div>' +
-      '<p class="klein">Toetsenbord (klik eerst in de matrix): pijltjes = cel verplaatsen · I / H / B / A = soort · Delete of 0 = geen relatie · Enter = volgende cel in de rij · spatie op de diagonaal = zelfiteratie aan/uit</p></section>' +
-      '<aside class="kolom smal"><div class="paneel" id="relpaneel"></div>' +
+      '<p class="klein">Toetsenbord (klik eerst in de matrix): pijltjes = cel verplaatsen · I / H / B / A = soort · Delete of 0 = geen relatie · Enter = volgende cel in de rij · <b>spatiebalk</b> op de diagonaal = zelfiteratie aan/uit</p></section>' +
+      '<aside class="kolom smal"><div class="paneel" id="relpaneel"></div><div class="paneel uitlegpaneel" id="uitlegpaneel" aria-live="polite">' + uitlegStandaard() + '</div>' +
       '<div class="paneel"><div class="rij tussen"><span>Relaties</span><b id="tel-rel">' + m.relaties.length + '</b></div><div class="rij tussen"><span>Zonder informatie-omschrijving</span><b id="tel-info">' + zonderInfo + '</b></div>' +
       '<p class="klein">De DSM analyse rekent met precies deze gegevens.</p></div></aside>';
     if (ui.sel && (!act(ui.sel.van) || !act(ui.sel.naar))) ui.sel = null;
-    if (ui.sel) { const v = relVolgorde(); markeerSelectie($('#mk table'), v.indexOf(ui.sel.naar), v.indexOf(ui.sel.van), 1); }
+    if (ui.sel) { const v = relVolgorde(); markeerSelectie($('#mk table'), v.indexOf(ui.sel.naar), v.indexOf(ui.sel.van)); }
+    richtMatrixIn($('#mk'), relVolgorde(), null);
     renderRelPaneel();
   }
 
+  /* ---------- uitleg bij de relatiesoorten (en de overige legenda-items) ---------- */
+  const UITLEG = {
+    I: { wat: 'De ontvanger heeft gegevens of een resultaat van de leverancier nodig om zijn werk goed te kunnen doen. Zonder die informatie beginnen kan wel, maar dan is de kans groot dat er later werk opnieuw moet.',
+         analyse: 'Staat de leverancier later in de volgorde, dan is dit een terugkoppeling. De optimalisatie maakt het aantal en de lengte daarvan zo klein mogelijk.' },
+    H: { wat: 'De ontvanger kan pas beginnen als de leverancier klaar is. Er is geen omweg: het is een fysieke, technische of formele voorwaarde. Voorbeeld: een prototype testen kan pas als het gebouwd is.',
+         analyse: 'Hoogste prioriteit: de leverancier komt altijd eerst. Een kring van alleen harde voorwaarden kan niet en wordt gemeld als tegenspraak.' },
+    B: { wat: 'De leverancier legt grenzen of eisen vast die het werk van de ontvanger beschermen, bijvoorbeeld veiligheids-, kwaliteits- of normeisen. De ontvanger kan werken, maar moet binnen die grenzen blijven. Verandert de leverancier iets, dan controleert de ontvanger of zijn resultaat nog klopt.',
+         analyse: 'Telt in deze versie als een gewone afhankelijkheid, net als Informatie.' },
+    A: { wat: 'Net als bij Informatie heeft de ontvanger deze informatie nodig. Staat de leverancier eerder in de volgorde, dan wacht je gewoon op de echte informatie en verandert er niets. Het verschil telt pas als de relatie een terugkoppeling wordt: de ontvanger moet dan beginnen vóórdat de leverancier klaar is. Met A leg je vooraf vast dat dat mag, met een zo goed mogelijke aanname die later wordt gecontroleerd.',
+         analyse: 'Telt nu als een gewone afhankelijkheid. Bij Scenario\'s & tears (volgende versie) zijn dit de terugkoppelingen die je het eerst bewust kunt doorbreken.' },
+    Z: { titel: 'Zelfiteratie', chip: '<span class="chip zelf">↻</span>',
+         wat: 'De activiteit is zelf een lus: ze gebruikt haar eigen uitkomst als nieuwe invoer, en vooraf weet je niet hoeveel rondes het worden. Voorbeelden: testen, aanpassen en opnieuw testen; berekenen en optimaliseren. Een taak die alleen lang duurt, is geen zelfiteratie. Loopt de lus via een andere activiteit (bijvoorbeeld een akkoord van de klant), leg dan relaties tussen die activiteiten vast.',
+         analyse: 'Verandert de volgorde niet, maar reken bij deze activiteit op herhaling en een onzekere doorlooptijd.',
+         hoe: 'Klik het grijze vakje van de activiteit op de diagonaal en druk op de <b>spatiebalk</b> (of gebruik de knop rechts). Nog een keer drukken haalt de zelfiteratie weg.' },
+    T: { titel: 'Terugkoppeling', chip: '<span class="chip fbm"></span>',
+         wat: 'Een relatie boven de diagonaal: de ontvanger staat vóór de leverancier in de volgorde. De ontvanger moet dus beginnen zonder de informatie, en kan later moeten herstellen.',
+         analyse: 'De optimalisatie probeert zo min mogelijk en zo kort mogelijke terugkoppelingen over te houden.' },
+    K: { titel: 'Iteratieblok', chip: '<span class="chip blokm"></span>',
+         wat: 'Een groep activiteiten die via een kring van relaties van elkaar afhangen. Geen van hen kan helemaal eerst. Het kader in de matrix laat zien waar het blok staat.',
+         analyse: 'Gevonden met het algoritme van Tarjan. Binnen het blok wordt de beste volgorde gezocht. Het is geen advies om de activiteiten samen te voegen.' },
+    M: { titel: 'Aanvullende kenmerken', chip: '<span class="chip" style="border:1px solid #C9C9C4;position:relative"><span style="position:absolute;right:1px;top:1px;width:5px;height:5px;border-radius:50%;background:#1F2328"></span></span>',
+         wat: 'Bij deze relatie zijn zekerheid, frequentie of bron ingevuld.', analyse: 'Deze kenmerken tellen niet mee in de optimalisatie; ze zijn voor de controleerbaarheid.' }
+  };
+  const VERGELIJK_KOP = 'Moet de ontvanger beginnen vóór de leverancier klaar is (terugkoppeling)?';
+  const VERGELIJK = { I: 'Liever niet: kans op herstelwerk', H: 'Nee, pas als de leverancier klaar is', B: 'Ja, binnen de grenzen van de leverancier', A: 'Ja, afgesproken: met de beste aanname' };
+  function vergelijkTabel(actief) {
+    return '<table class="vergelijk"><thead><tr><th colspan="2">' + VERGELIJK_KOP + '</th></tr></thead><tbody>' +
+      Object.keys(SOORTEN).map(k => '<tr' + (k === actief ? ' class="actief"' : '') + '><td><span class="chip ' + k + '">' + k + '</span>' + SOORTEN[k].kort + '</td><td>' + VERGELIJK[k] + '</td></tr>').join('') + '</tbody></table>';
+  }
+  function bouwUitleg(k) {
+    const u = UITLEG[k]; if (!u) return '';
+    const isSoort = !!SOORTEN[k];
+    const kop = isSoort ? '<span class="chip ' + k + '">' + k + '</span>' + SOORTEN[k].naam : u.chip + u.titel;
+    return '<h3 class="uitlegkop">' + kop + '</h3><p class="uitleg">' + u.wat + '</p>' +
+      '<p class="klein"><b>In de analyse:</b> ' + u.analyse + '</p>' + (u.hoe ? '<p class="klein"><b>Vastleggen:</b> ' + u.hoe + '</p>' : '') + (isSoort ? vergelijkTabel(k) : '');
+  }
+  function uitlegStandaard() {
+    if (ui.sel && ui.sel.van === ui.sel.naar) return bouwUitleg('Z');
+    return '<h2>Uitleg relatiesoorten</h2><p class="klein">Wijs een soort aan in de legenda boven de matrix of bij <b>Geselecteerde cel</b> voor de volledige uitleg.</p>' + vergelijkTabel(null) +
+      '<p class="klein"><span class="chip zelf" style="vertical-align:middle;margin-right:6px">↻</span><b>Zelfiteratie:</b> klik een grijs vakje op de diagonaal en druk op de <b>spatiebalk</b>.</p>';
+  }
+  function toonUitleg(k, bron) {
+    if (ui.tab === 'relaties') {
+      const p = $('#uitlegpaneel'); if (!p) return;
+      p.innerHTML = k ? bouwUitleg(k) : uitlegStandaard();
+      p.classList.toggle('actief', !!k);
+    } else if (ui.tab === 'analyse') {
+      const pop = $('#uitlegpop'); if (!pop) return;
+      if (!k) { pop.hidden = true; return; }
+      pop.innerHTML = bouwUitleg(k); pop.hidden = false;
+      const kader = pop.parentElement, max = kader.clientWidth - pop.offsetWidth;
+      pop.style.left = Math.max(0, Math.min(max, bron ? bron.offsetLeft : 0)) + 'px';
+    }
+  }
+  inhoud.addEventListener('mouseover', e => {
+    const b = e.target.closest('[data-uitleg], .soorten [data-soort]'); if (!b) return;
+    const k = b.dataset.uitleg || b.dataset.soort; if (k) toonUitleg(k, b);
+  });
+  inhoud.addEventListener('mouseout', e => {
+    const b = e.target.closest('[data-uitleg], .soorten [data-soort]'); if (!b) return;
+    if (e.relatedTarget && b.contains(e.relatedTarget)) return;
+    toonUitleg(null);
+  });
+  inhoud.addEventListener('focusin', e => { const b = e.target.closest('[data-uitleg], .soorten [data-soort]'); if (b && (b.dataset.uitleg || b.dataset.soort)) toonUitleg(b.dataset.uitleg || b.dataset.soort, b); });
+  inhoud.addEventListener('focusout', e => { if (e.target.closest('[data-uitleg], .soorten [data-soort]')) toonUitleg(null); });
+
   function legenda(analyse) {
-    return '<div class="legenda">' + Object.keys(SOORTEN).map(k => '<span><span class="chip ' + k + '">' + k + '</span>' + SOORTEN[k].kort + '</span>').join('') +
-      '<span><span class="chip diag">↻</span>Zelfiteratie</span>' +
-      (analyse ? '<span><span class="chip fbm"></span>Terugkoppeling (boven diagonaal)</span><span><span class="chip blokm"></span>Iteratieblok</span>' : '<span><span class="chip" style="border:1px solid #C9C9C4;position:relative"><span style="position:absolute;right:1px;top:1px;width:5px;height:5px;border-radius:50%;background:#1F2328"></span></span>Aanvullende kenmerken ingevuld</span>') + '</div>';
+    const item = (k, chip, tekst) => '<span data-uitleg="' + k + '" tabindex="0">' + chip + tekst + '</span>';
+    return '<div class="legendakader"><div class="legenda" aria-label="Legenda; wijs een item aan voor uitleg">' +
+      Object.keys(SOORTEN).map(k => item(k, '<span class="chip ' + k + '">' + k + '</span>', SOORTEN[k].kort)).join('') +
+      item('Z', UITLEG.Z.chip, 'Zelfiteratie') +
+      (analyse ? item('T', UITLEG.T.chip, 'Terugkoppeling (boven diagonaal)') + item('K', UITLEG.K.chip, 'Iteratieblok')
+               : item('M', UITLEG.M.chip, 'Aanvullende kenmerken ingevuld')) +
+      '<span class="legenda-hint">ⓘ wijs aan voor uitleg</span></div>' +
+      (analyse ? '<div id="uitlegpop" class="uitlegpop" role="tooltip" hidden></div>' : '') + '</div>';
   }
 
   function renderRelPaneel() {
@@ -268,8 +407,9 @@
     if (van === naar) {
       const aan = m.zelfiteraties.includes(van);
       p.innerHTML = '<div class="rij tussen"><h2>Diagonaal</h2><span class="celkop">' + van + '</span></div>' +
-        '<p class="uitleg"><b>' + van + ' ' + esc(naam(van)) + '</b>. Op de diagonaal leg je een zelfiteratie vast: de activiteit herhaalt zichzelf.</p>' +
-        '<button class="knop" data-zelf aria-pressed="' + aan + '">↻ Zelfiteratie ' + (aan ? 'aan' : 'uit') + '</button>';
+        '<p class="uitleg"><b>' + van + ' ' + esc(naam(van)) + '</b>. Op de diagonaal leg je een zelfiteratie vast: de activiteit herhaalt zichzelf. De uitleg staat hieronder.</p>' +
+        '<p class="klein">Zelfiteratie is nu <b>' + (aan ? 'aan' : 'uit') + '</b>.</p>' +
+        '<button class="knop" data-zelf aria-pressed="' + aan + '">↻ Zelfiteratie ' + (aan ? 'uitzetten' : 'aanzetten') + ' <span class="toets">spatiebalk</span></button>';
       return;
     }
     const r = M.vindRelatie(m, van, naar);
@@ -297,11 +437,11 @@
   function vernieuwRelCel() {
     const tabel = $('#mk table'); if (!tabel || !ui.sel) return;
     const v = relVolgorde(), i = v.indexOf(ui.sel.naar), j = v.indexOf(ui.sel.van);
-    const td = celEl(tabel, i, j, 1); if (!td) return;
-    if (i === j) { td.textContent = m.zelfiteraties.includes(ui.sel.van) ? '↻' : ''; }
+    const td = celEl(tabel, i, j); if (!td) return;
+    if (i === j) { const z = m.zelfiteraties.includes(ui.sel.van); td.textContent = z ? '↻' : String(i + 1); td.classList.toggle('zelf', z); }
     else {
       const r = M.vindRelatie(m, ui.sel.van, ui.sel.naar);
-      td.className = (r ? 's-' + r.soort + (heeftKenmerk(r) ? ' kenm' : '') : '') + ' gekozen';
+      td.className = (r ? 's-' + r.soort + (heeftKenmerk(r) ? ' kenm' : '') : '') + ((j % 5 === 4 && j < v.length - 1) ? ' vijf-k' : '') + ' gekozen';
       td.textContent = r ? r.soort : '';
       td.title = r ? ui.sel.naar + ' heeft informatie nodig van ' + ui.sel.van + ' (' + SOORTEN[r.soort].kort + ')' : '';
     }
@@ -314,8 +454,8 @@
     const v = relVolgorde();
     if (i < 0 || j < 0 || i >= v.length || j >= v.length) return;
     ui.sel = { naar: v[i], van: v[j] };
-    markeerSelectie($('#mk table'), i, j, 1);
-    renderRelPaneel();
+    markeerSelectie($('#mk table'), i, j);
+    renderRelPaneel(); toonUitleg(null);
   }
   function zetSoort(soort) {
     if (!ui.sel || ui.sel.van === ui.sel.naar) return;
@@ -409,7 +549,8 @@
         '<label class="veld">Tijdlimiet per blok (s)<input type="number" min="1" max="60" data-inst="tijdlimietMs" value="' + Math.round(m.instellingen.tijdlimietMs / 1000) + '"></label></div>' +
         '<p class="klein">Wijzigen maakt de analyse verouderd; bereken daarna opnieuw.</p></div>' +
       '</aside>';
-    if (ui.analyseSel) { const i = volg.indexOf(ui.analyseSel.naar), j = volg.indexOf(ui.analyseSel.van); if (i >= 0 && j >= 0) markeerSelectie($('#ak table'), i, j, 2); else ui.analyseSel = null; }
+    if (ui.analyseSel) { const i = volg.indexOf(ui.analyseSel.naar), j = volg.indexOf(ui.analyseSel.van); if (i >= 0 && j >= 0) markeerSelectie($('#ak table'), i, j); else ui.analyseSel = null; }
+    richtMatrixIn($('#ak'), volg, a.blokken);
     renderAnaPaneel(volg, bi);
   }
 
@@ -443,7 +584,7 @@
       const a = m.analyse, volg = huidigeVolgorde(ui.weergave === 'voorgesteld' ? a.volgorde : m.activiteiten.map(x => x.id));
       const i = +td.dataset.i, j = +td.dataset.j; if (i === j) return;
       ui.analyseSel = { naar: volg[i], van: volg[j] };
-      markeerSelectie($('#ak table'), i, j, 2); renderAnaPaneel(volg, blokInfo(a));
+      markeerSelectie($('#ak table'), i, j); renderAnaPaneel(volg, blokInfo(a));
     }
   });
   inhoud.addEventListener('change', e => {

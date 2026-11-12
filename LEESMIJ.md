@@ -1,5 +1,7 @@
 # DSM-werkbank
 
+**Versie 0.2** — het versienummer staat in de kop van de werkbank. Na een update laadt de browser dankzij `?v=0.2` achter de scripts en de opmaak de nieuwe bestanden.
+
 Webtool voor de analyse van projecten en processen met een Design Structure Matrix (DSM). De tool draait volledig in de browser: er is geen server, database of account nodig.
 
 ## Mogelijkheden
@@ -39,6 +41,22 @@ Webtool voor de analyse van projecten en processen met een Design Structure Matr
 - `controle.html` rekent vaste controlevoorbeelden door: ketens, cycli, losse blokken, zelfiteraties, harde voorwaarden en tegenspraken, gewijzigde regelvolgorde, actualiteit, ID's en een model van 100 activiteiten.
 
 **Nog niet beschikbaar:** scenario's en tears, en het opgemaakte rapport (PDF en Excel met handleiding). Ook afdelingen, beschikbaarheidsdatums, doorlooptijd, capaciteit en simulatie zitten er nog niet in.
+
+## Wijzigingen in versie 0.2
+
+- **Iteratieblokken** krijgen een duidelijk kader in de matrix.
+- **De diagonaal** is donkergrijs, met het volgnummer van de activiteit. De relaties hebben lichtere tinten, zodat diagonaal en relaties goed te onderscheiden zijn. Een zelfiteratie (↻) is bijna zwart. Je zet hem aan of uit met de spatiebalk op een vakje van de diagonaal.
+- **Rijen en kolommen** hebben een volgnummer (1, 2, 3 …) in de getoonde volgorde.
+- **Aanwijzen en selecteren:**
+  - wijs je een vakje aan, dan lichten de kolomkop en de rijnamen van de ontvanger en de leverancier licht op;
+  - selecteer je een vakje, dan worden ze sterk gekleurd;
+  - een streepje links geeft de ontvanger (donker) en de leverancier (groenblauw) aan.
+- **Selectiekleur:** selecteren is groenblauw, zodat het niet meer lijkt op de gele tint van een iteratieblok.
+- **Vakjes** groeien mee met de beschikbare ruimte: tussen 22 en 40 pixels.
+- **Hulplijnen:** na elke 5 rijen en kolommen staat een subtiele, iets dikkere lijn, die dunner is dan het blokkader.
+- **Uitleg per relatiesoort:**
+  - Relaties: wijs een soort aan in de legenda of bij *Geselecteerde cel*; de uitleg verschijnt rechts;
+  - DSM analyse: wijs een item in de legenda aan; de uitleg verschijnt eronder.
 
 ## Opslag
 

@@ -1,9 +1,10 @@
 /* DSM-werkbank — opmaak */
 :root {
   --bg: #F4F4F2; --paneel: #FFFFFF; --lijn: #D6D6D1; --lijn-licht: #E6E6E1; --tekst: #1F1F1F; --tekst-2: #3A3A37; --tekst-3: #5C5C58;
-  --donker: #1F2328; --diag: #2B2B2B;
+  --donker: #1F2328; --diag: #D9D9D4; --diag-t: #4A4A46; --zelf: #2B2B2B;
   --I: #3566C9; --I-t: #FFFFFF; --H: #B85C0F; --H-t: #FFFFFF; --B: #8FCDB0; --B-t: #0E2E1E; --A: #D3C4F2; --A-t: #2A1A57;
-  --blok: #FCEBB6; --blok-rand: #E0C46A; --keuze: #F5B700; --kruis: #FFF7DE; --fb: #B42318;
+  --blok: #FCF0C6; --blok-rand: #E0C46A; --blok-kader: #8A6400;
+  --keuze: #0E8C86; --keuze-kop: #BDEBE7; --wijs: #E3F5F3; --wijs-rand: #7FCFC9; --kruis: #FFF7DE; --fb: #B42318;
   --cel: 28px;
 }
 * { box-sizing: border-box; }
@@ -18,6 +19,7 @@ a { color: #1F4FB3; }
 .kop { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 24px; padding: 10px 24px; background: var(--donker); color: #F4F4F2; }
 .kop-links, .kop-rechts { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .merk { font-weight: 700; font-size: 16px; }
+.versie { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 999px; border: 1px solid #5A6068; color: #B8BCC2; }
 .kop .modelnaam { background: transparent; border: 1px solid transparent; color: #E6E8EB; font-size: 14px; padding: 6px 8px; border-radius: 6px; min-width: 240px; }
 .kop .modelnaam:hover, .kop .modelnaam:focus { border-color: #5A6068; outline: none; }
 .meta { font-size: 12px; color: #B8BCC2; }
@@ -64,9 +66,10 @@ label.veld > * { font-weight: 400; }
 .chip.I { background: var(--I); color: var(--I-t); } .chip.H { background: var(--H); color: var(--H-t); }
 .chip.B { background: var(--B); color: var(--B-t); } .chip.A { background: var(--A); color: var(--A-t); }
 .chip.leeg { border: 1px dashed #8A8A85; color: var(--tekst-3); }
-.chip.diag { background: var(--diag); color: #FFFFFF; }
+.chip.diag { background: var(--diag); color: var(--diag-t); font-family: "JetBrains Mono", Consolas, monospace; font-size: 10px; }
+.chip.zelf { background: var(--zelf); color: #FFFFFF; }
 .chip.fbm { background: #FFFFFF; box-shadow: inset 0 0 0 2px var(--fb); }
-.chip.blokm { background: var(--blok); border: 1px solid var(--blok-rand); }
+.chip.blokm { background: var(--blok); border: 2px solid var(--blok-kader); }
 .legenda { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--tekst-2); }
 .legenda span { display: inline-flex; align-items: center; gap: 6px; }
 .maat { font-size: 12px; padding: 8px 10px; border-radius: 6px; background: #FFFFFF; border: 1px solid var(--lijn); color: var(--tekst-2); }
@@ -96,32 +99,47 @@ table.lijst .rechts { text-align: right; white-space: nowrap; }
 table.lijst .num { text-align: right; }
 
 /* Matrix */
-.matrixkader { overflow: auto; border: 1px solid #E1E1DC; border-radius: 6px; max-height: calc(100vh - 260px); min-height: 200px; outline: none; }
+.matrixkader { position: relative; overflow: auto; border: 1px solid #E1E1DC; border-radius: 6px; max-height: calc(100vh - 260px); min-height: 200px; outline: none; }
 .matrixkader:focus-visible { box-shadow: 0 0 0 3px #9DB8EC; }
 table.dsm { border-collapse: separate; border-spacing: 0; font-size: 11px; }
 table.dsm th, table.dsm td { padding: 0; }
-table.dsm thead th { position: sticky; top: 0; z-index: 2; background: #FFFFFF; height: var(--cel); min-width: var(--cel); width: var(--cel); border-right: 1px solid #E1E1DC; border-bottom: 1px solid #C9C9C4; font-family: "JetBrains Mono", Consolas, monospace; font-size: 9px; font-weight: 600; text-align: center; }
-table.dsm thead th.hoek { left: 0; z-index: 3; width: auto; min-width: 220px; text-align: left; padding: 0 10px; font-family: inherit; font-size: 11px; font-weight: 400; color: var(--tekst-3); border-right: 1px solid #C9C9C4; }
-table.dsm thead th.blokkop { left: 0; z-index: 3; min-width: 40px; width: 40px; }
-table.dsm tbody th { position: sticky; left: 0; z-index: 1; background: #FFFFFF; height: var(--cel); text-align: left; font-weight: 400; padding: 0 10px; border-right: 1px solid #C9C9C4; border-bottom: 1px solid #E1E1DC; white-space: nowrap; max-width: 280px; overflow: hidden; text-overflow: ellipsis; }
-table.dsm tbody th .id { font-family: "JetBrains Mono", Consolas, monospace; font-weight: 600; margin-right: 8px; }
+table.dsm thead th { position: sticky; top: 0; z-index: 3; background: #FFFFFF; height: 30px; min-width: var(--cel); width: var(--cel); border-right: 1px solid #E1E1DC; border-bottom: 1px solid #C9C9C4; font-family: "JetBrains Mono", Consolas, monospace; font-size: 11px; font-weight: 700; text-align: center; color: var(--tekst-2); }
+table.dsm thead th.hoek { left: 0; z-index: 4; width: auto; min-width: 250px; text-align: left; padding: 0 10px; font-family: inherit; font-size: 11px; font-weight: 400; color: var(--tekst-3); border-right: 1px solid #C9C9C4; }
+table.dsm thead th.blokkop { left: 0; z-index: 4; min-width: 40px; width: 40px; font-family: inherit; font-size: 11px; }
+table.dsm tbody th { position: sticky; left: 0; z-index: 2; background: #FFFFFF; height: var(--cel); text-align: left; font-weight: 400; padding: 0 10px 0 6px; border-right: 1px solid #C9C9C4; border-bottom: 1px solid #E1E1DC; white-space: nowrap; max-width: 300px; overflow: hidden; text-overflow: ellipsis; }
+table.dsm tbody th .nr { display: inline-block; min-width: 22px; margin-right: 6px; text-align: right; font-family: "JetBrains Mono", Consolas, monospace; font-weight: 700; color: var(--tekst-2); }
+table.dsm tbody th .id { font-family: "JetBrains Mono", Consolas, monospace; font-weight: 600; margin-right: 8px; color: var(--tekst-3); }
 table.dsm tbody th.blokcel { min-width: 40px; width: 40px; max-width: 40px; text-align: center; padding: 0; font-family: "JetBrains Mono", Consolas, monospace; font-size: 10px; color: var(--tekst-2); border-right: 1px solid #E1E1DC; }
 table.dsm.met-blok tbody th.naamcel { left: 40px; }
 table.dsm.met-blok thead th.hoek { left: 40px; }
-table.dsm td { width: var(--cel); min-width: var(--cel); height: var(--cel); border-right: 1px solid #E1E1DC; border-bottom: 1px solid #E1E1DC; text-align: center; font-weight: 700; cursor: pointer; background: #FFFFFF; user-select: none; }
+table.dsm td { width: var(--cel); min-width: var(--cel); height: var(--cel); border-right: 1px solid #E1E1DC; border-bottom: 1px solid #E1E1DC; text-align: center; font-weight: 700; cursor: pointer; background: #FFFFFF; user-select: none; font-size: var(--celtekst, 11px); }
+/* Punt 8: hulplijn na elke 5 rijen en kolommen (dunner dan de blokrand) */
+table.dsm .vijf-k { border-right: 2px solid #A8A8A2; }
+table.dsm .vijf-r, table.dsm tr.vijf-r > * { border-bottom: 2px solid #A8A8A2; }
 table.dsm td.boven { background: #FAFAF7; }
 table.dsm td.blok, table.dsm th.blok { background: var(--blok); }
 table.dsm td.kruis, table.dsm th.kruis { background: var(--kruis); }
-table.dsm td.diag { background: var(--diag); color: #FFFFFF; cursor: pointer; }
+/* Punt 2: rustige diagonaal met volgnummer; zelfiteratie donker */
+table.dsm td.diag { background: var(--diag); color: var(--diag-t); font-weight: 600; font-size: calc(var(--celtekst, 11px) - 1px); font-family: "JetBrains Mono", Consolas, monospace; cursor: pointer; }
+table.dsm td.diag.zelf { background: var(--zelf); color: #FFFFFF; font-size: calc(var(--celtekst, 11px) + 4px); font-family: inherit; }
 table.dsm td.s-I { background: var(--I); color: var(--I-t); }
 table.dsm td.s-H { background: var(--H); color: var(--H-t); }
 table.dsm td.s-B { background: var(--B); color: var(--B-t); }
 table.dsm td.s-A { background: var(--A); color: var(--A-t); }
 table.dsm td.fb { box-shadow: inset 0 0 0 2px #FFFFFF, inset 0 0 0 4px var(--fb); }
-table.dsm td.gekozen { outline: 3px solid var(--keuze); outline-offset: -3px; }
 table.dsm td.kenm { position: relative; }
 table.dsm td.kenm::after { content: ""; position: absolute; right: 2px; top: 2px; width: 5px; height: 5px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 0 0 1px #1F2328; }
-table.dsm th.gekozen-kop { background: #FFE9A8 !important; }
+/* Punt 3 en 6: aanwijzen (licht) en selecteren (sterk), in een kleur die niet op de bloktint lijkt */
+table.dsm td.aangewezen { box-shadow: inset 0 0 0 2px var(--wijs-rand); }
+table.dsm th.wijs-kop { background: var(--wijs) !important; }
+table.dsm td.gekozen { outline: 3px solid var(--keuze); outline-offset: -3px; }
+table.dsm th.gekozen-kop { background: var(--keuze-kop) !important; color: #06302F; }
+table.dsm th.gekozen-kop .nr, table.dsm th.gekozen-kop .id { color: #06302F; }
+table.dsm th.gekozen-kop.lev { box-shadow: inset 5px 0 0 var(--keuze); }
+table.dsm th.gekozen-kop.ontv { box-shadow: inset 5px 0 0 #06302F; }
+/* Punt 1: duidelijk kader om elk iteratieblok */
+.blokkader { position: absolute; z-index: 1; pointer-events: none; border: 3px solid var(--blok-kader); border-radius: 2px; }
+.blokkader span { position: absolute; top: -3px; left: -3px; transform: translateY(-100%); padding: 1px 6px; font-size: 10px; font-weight: 700; font-family: "JetBrains Mono", Consolas, monospace; background: var(--blok-kader); color: #FFFFFF; border-radius: 3px 3px 0 0; white-space: nowrap; }
 
 /* Relatiepaneel */
 .soorten { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
@@ -151,8 +169,32 @@ dl.gegevens dd { margin: 0; }
 .goed { color: #14462A; font-weight: 600; }
 
 @media print {
-  .kop, .tabbalk, .meldingen { display: none; }
+  .kop, .tabbalk, .meldingen, .uitlegpop, .legenda-hint { display: none !important; }
 }
 
 .vinkje { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.45; color: var(--tekst-2); }
 .vinkje input { width: 18px; height: 18px; flex: none; margin: 1px 0 0; }
+
+/* Uitleg bij relatiesoorten (v0.2) */
+.legendakader { position: relative; }
+.legenda [data-uitleg] { padding: 3px 6px; margin: -3px -6px; border-radius: 6px; cursor: help; outline: none; }
+.legenda [data-uitleg]:hover, .legenda [data-uitleg]:focus-visible { background: #F1F1EE; box-shadow: 0 0 0 1px #D6D6D1; }
+.legenda-hint { color: var(--tekst-3); font-size: 11px; margin-left: auto; }
+.uitlegpop { position: absolute; top: calc(100% + 8px); left: 0; z-index: 20; width: 440px; max-width: 100%; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; background: #FFFFFF; border: 1px solid #C9C9C4; border-radius: 10px; box-shadow: 0 8px 24px rgba(31,35,40,.16); }
+.uitlegpop[hidden] { display: none; }
+.uitlegkop { display: flex; align-items: center; gap: 8px; font-size: 14px !important; margin: 0; }
+.uitlegpaneel.actief { border-color: #9A9A94; box-shadow: 0 0 0 1px #9A9A94; }
+table.vergelijk { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 2px; }
+table.vergelijk th { text-align: left; font-size: 11px; font-weight: 700; letter-spacing: .02em; color: var(--tekst-3); padding: 0 0 6px; border-bottom: 1px solid var(--lijn-licht); }
+table.vergelijk td { padding: 6px 4px; border-bottom: 1px solid #EFEFEA; vertical-align: middle; color: var(--tekst-2); }
+table.vergelijk td:first-child { white-space: nowrap; padding-right: 10px; }
+table.vergelijk td:first-child .chip { margin-right: 6px; }
+table.vergelijk tr.actief td { background: #F1F1EE; color: var(--tekst); font-weight: 600; }
+.soorten button:hover { border-color: #9A9A94; }
+
+/* v0.2 kleuren: diagonaal donkergrijs (variant A), relaties lichter (variant B), hulplijn subtieler */
+:root { --diag: #6E6E69; --diag-t: #FFFFFF; --zelf: #1F2328;
+  --I: #93B3EC; --I-t: #0F2A63; --H: #EBAA72; --H-t: #4A2200; --B: #A9D9C2; --B-t: #0E2E1E; --A: #D5C8F3; --A-t: #2A1A57; }
+table.dsm .vijf-k { border-right: 1.5px solid #C8C8C2; }
+table.dsm .vijf-r, table.dsm tr.vijf-r > * { border-bottom: 1.5px solid #C8C8C2; }
+.toets { display: inline-block; margin-left: 6px; padding: 1px 6px; border: 1px solid #C9C9C4; border-bottom-width: 2px; border-radius: 4px; font-size: 11px; font-weight: 600; color: var(--tekst-2); background: #FAFAF7; }
