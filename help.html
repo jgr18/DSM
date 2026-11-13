@@ -7,7 +7,8 @@
 <link rel="stylesheet" href="css/style.css?v=0.6">
 <style>
   .help { max-width: 1240px; margin: 0 auto; padding: 24px; display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 32px; align-items: start; }
-  .toc { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow: auto; background: var(--paneel); border: 1px solid var(--lijn); border-radius: 10px; padding: 16px; font-size: 13px; }
+  .kop { position: sticky; top: 0; z-index: 50; }
+  .toc { position: sticky; top: 76px; max-height: calc(100vh - 92px); overflow: auto; background: var(--paneel); border: 1px solid var(--lijn); border-radius: 10px; padding: 16px; font-size: 13px; }
   .toc ol { margin: 0; padding-left: 20px; } .toc ol ol { padding-left: 14px; margin: 4px 0 8px; } .toc li { margin: 3px 0; line-height: 1.4; }
   .toc a { color: var(--tekst-2); text-decoration: none; } .toc a:hover { color: var(--tekst); text-decoration: underline; }
   .tekst { background: var(--paneel); border: 1px solid var(--lijn); border-radius: 10px; padding: 28px 36px; line-height: 1.6; font-size: 15px; max-width: 860px; }
@@ -16,7 +17,7 @@
   .tekst h3 { font-size: 15px; margin: 22px 0 4px; }
   .tekst p, .tekst ul, .tekst ol { margin: 6px 0 10px; color: var(--tekst-2); }
   .tekst li { margin: 3px 0; }
-  .tekst section, .tekst h2, .tekst h3, .tekst [id] { scroll-margin-top: 16px; }
+  .tekst section, .tekst h2, .tekst h3, .tekst [id] { scroll-margin-top: 80px; }
   .tekst :target { background: #FFF4CC; box-shadow: 0 0 0 8px #FFF4CC; border-radius: 4px; transition: background 1.5s; }
   .tekst table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0 14px; }
   .tekst th { text-align: left; color: var(--tekst-3); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--lijn); }
@@ -38,7 +39,7 @@
   @media print { .figuur { break-inside: avoid; } }
   kbd { font-family: inherit; font-size: 12px; font-weight: 600; padding: 1px 6px; border: 1px solid #C9C9C4; border-bottom-width: 2px; border-radius: 4px; background: #FAFAF7; }
   @media (max-width: 900px) { .help { grid-template-columns: 1fr; } .toc { position: static; max-height: none; } }
-  @media print { .toc, .kop { display: none; } .help { display: block; padding: 0; } .tekst { border: 0; padding: 0; max-width: none; } .tekst h2 { break-after: avoid; } }
+  @media print { .toc, .kop { display: none !important; } .help { display: block; padding: 0; } .tekst { border: 0; padding: 0; max-width: none; } .tekst h2 { break-after: avoid; } }
 </style>
 </head>
 <body>
@@ -209,7 +210,7 @@
 <table><tr><th style="width:30%">Onderdeel</th><th>Herkomst</th><th>Toelichting</th></tr>
 <tr><td>Rij = ontvanger, kolom = leverancier; terugkoppelingen boven de diagonaal</td><td><span class="bron boek">DSM-methode</span></td><td>De gangbare schrijfwijze voor proces-DSM's. Andere bronnen gebruiken soms de omgekeerde schrijfwijze; dan staan terugkoppelingen onder de diagonaal.</td></tr>
 <tr><td>Iteratieblokken bepalen en blokken ordenen (partitioneren)</td><td><span class="bron boek">DSM-methode</span></td><td>Voor het vinden van de blokken gebruikt de DSM het algoritme van Tarjan, een standaardalgoritme dat dezelfde groepen vindt als de partitioneringsmethoden uit de DSM-literatuur.</td></tr>
-<tr><td>Volgorde binnen een blok optimaliseren (sequencing)</td><td><span class="bron boek">DSM-methode</span></td><td>De gedachte komt uit de methode. De precieze doelvolgorde (5 doelen in rangorde) is een <span class="bron eigen">eigen keuze</span>, gekozen omdat ze uitlegbaar en reproduceerbaar is.</td></tr>
+<tr><td>Volgorde binnen een blok optimaliseren (sequencing)</td><td><span class="bron boek">DSM-methode</span></td><td>De gedachte komt uit de methode. De precieze doelvolgorde (4 doelen in rangorde) is een <span class="bron eigen">eigen keuze</span>, gekozen omdat ze uitlegbaar en reproduceerbaar is.</td></tr>
 <tr><td>Tears en scenario's</td><td><span class="bron boek">DSM-methode</span></td><td>Tearing komt uit de methode. De vastlegging per tear (aanname, verantwoordelijke, controlemoment, gevolgen) en de regels per soort zijn een <span class="bron eigen">eigen keuze</span>.</td></tr>
 <tr><td>Relatiesoorten: informatie (blauw, zonder letter), H en B</td><td><span class="bron eigen">eigen keuze</span></td><td>De literatuur kent verschillende manieren om relaties te typeren of te wegen. Deze beantwoorden de vragen die bij het ordenen en tearen tellen: kan de ontvanger beginnen zonder de informatie, en wie beslist daarover? Een vroegere vierde soort, "aanname toegestaan", is samengevoegd met informatie: voor de analyse maakte het onderscheid niet uit, en boven de diagonaal geldt voor beide hetzelfde: kans op rework. Oude bestanden met A worden bij het openen automatisch omgezet.</td></tr>
 <tr><td>Voorwaardelijke relaties (◆), keuzepunten en samenkomst</td><td><span class="bron boek">DSM-methode</span></td><td>Het boek noemt voorwaardelijke relaties als vierde basispatroon en stelt voor ze met een eigen symbool, zoals een ruit, te tonen. Hoe de DSM opties, takken en samenkomst afleidt uit de relaties, en het doorrekenen per optie in een scenario, is een <span class="bron eigen">eigen keuze</span>.</td></tr>

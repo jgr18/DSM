@@ -254,3 +254,8 @@ table.dsm td.s-V { background: var(--V); color: var(--V-t); font-size: calc(var(
 .optie-nr { font-size: 12px; font-weight: 700; color: var(--V-t); white-space: nowrap; }
 .samenkomst { padding: 6px 8px; background: #F4F4F2; border-radius: 6px; }
 .alt-label { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 999px; font-size: 11px; font-weight: 600; background: var(--V); color: var(--V-t); }
+
+/* Vast menu: zwarte balk en tabbladen blijven staan bij scrollen (v0.6) */
+.vast-menu { position: sticky; top: 0; z-index: 50; }
+.vast-menu .helpbalk { position: static; }
+@media print { .vast-menu { position: static; } }
