@@ -7,7 +7,7 @@
     I: { naam: 'Informatieafhankelijkheid', kort: 'Informatie' },
     H: { naam: 'Harde uitvoeringsvoorwaarde', kort: 'Harde voorwaarde' },
     B: { naam: 'Bescherming', kort: 'Bescherming' },
-    A: { naam: 'Voorlopige aanname toegestaan', kort: 'Aanname toegestaan' }
+    V: { naam: 'Voorwaardelijk (keuze)', kort: 'Voorwaardelijk' }
   };
   const OPSLAGSLEUTEL = 'dsm-werkbank:model';
 
@@ -24,6 +24,7 @@
       relaties: [],
       zelfiteraties: [],
       scenarios: [],
+      keuzepunten: {},
       volgendeScenario: 1,
       instellingen: { wisselingVoorkeur: true, maxExact: 8, tijdlimietMs: 3000 },
       instellingenversie: 1,
@@ -114,9 +115,9 @@
   }
 
   function zetRelatie(m, van, naar, soort) {
-    if (van === naar) return { bron: 'Relaties, cel ' + naar + '/' + van, melding: 'Een activiteit kan geen informatie van zichzelf ontvangen.', herstel: 'Markeer een zelfiteratie door op de diagonaal te klikken.' };
+    if (van === naar) return { bron: 'Relaties, cel ' + naar + '/' + van, melding: 'Een activiteit kan geen informatie van zichzelf ontvangen.', herstel: 'Kies een cel buiten de diagonaal.' };
     if (!vind(m, van) || !vind(m, naar)) return { bron: 'Relaties', melding: 'Onbekende activiteit in relatie ' + van + ' → ' + naar + '.', herstel: 'Kies leverancier en ontvanger uit de bestaande activiteiten.' };
-    if (!SOORTEN[soort]) return { bron: 'Relaties', melding: 'Onbekende soort "' + soort + '".', herstel: 'Gebruik I, H, B of A.' };
+    if (!SOORTEN[soort]) return { bron: 'Relaties', melding: 'Onbekende soort "' + soort + '".', herstel: 'Gebruik I, H, B of V.' };
     const r = vindRelatie(m, van, naar);
     if (r) { if (r.soort === soort) return; r.soort = soort; }
     else m.relaties.push({ van, naar, soort, info: '', zekerheid: '', frequentie: '', bron: '' });
@@ -133,12 +134,6 @@
     const r = vindRelatie(m, van, naar); if (!r || r[veld] === waarde) return;
     r[veld] = waarde;
     gewijzigd(m, false);
-  }
-
-  function wisselZelfiteratie(m, id) {
-    const i = m.zelfiteraties.indexOf(id);
-    if (i >= 0) m.zelfiteraties.splice(i, 1); else m.zelfiteraties.push(id);
-    gewijzigd(m, true);
   }
 
   function zetInstelling(m, sleutel, waarde) {
@@ -177,8 +172,8 @@
     (data.relaties || []).forEach((r, i) => {
       const plek = bron + ', relaties[' + (i + 1) + ']';
       if (!ids.has(r.van) || !ids.has(r.naar)) fouten.push({ bron: plek, melding: 'Relatie ' + r.van + ' → ' + r.naar + ' verwijst naar een onbekende activiteit.', herstel: 'Verwijder de relatie of voeg de activiteit toe.' });
-      if (r.van === r.naar) fouten.push({ bron: plek, melding: 'Relatie ' + r.van + ' → ' + r.naar + ' verwijst naar zichzelf.', herstel: 'Zet de activiteit in "zelfiteraties" in plaats van als relatie.' });
-      if (!SOORTEN[r.soort]) fouten.push({ bron: plek, melding: 'Onbekende soort "' + r.soort + '".', herstel: 'Gebruik I, H, B of A.' });
+      if (r.van === r.naar) fouten.push({ bron: plek, melding: 'Relatie ' + r.van + ' → ' + r.naar + ' verwijst naar zichzelf.', herstel: 'Verwijder deze relatie uit het bestand.' });
+      if (!SOORTEN[r.soort] && r.soort !== 'A') fouten.push({ bron: plek, melding: 'Onbekende soort "' + r.soort + '".', herstel: 'Gebruik I, H, B of V.' });
     });
     if (data.scenarios !== undefined && !Array.isArray(data.scenarios)) fouten.push({ bron: bron + ', scenarios', melding: 'De scenario\'s staan niet in een lijst.', herstel: 'Verwijder het onderdeel "scenarios" uit het bestand of herstel de opmaak.' });
     (Array.isArray(data.scenarios) ? data.scenarios : []).forEach((sc, i) => {
@@ -191,7 +186,11 @@
   function normaliseer(data) {
     const m = Object.assign(leegModel(), data);
     m.instellingen = Object.assign(leegModel().instellingen, data.instellingen || {});
-    m.relaties = (m.relaties || []).map(r => Object.assign({ info: '', zekerheid: '', frequentie: '', bron: '' }, r));
+    // Vanaf v0.5: de vroegere soort A (aanname toegestaan) is samengevoegd met I (informatie).
+    // Vanaf v0.6: zelfiteraties bestaan niet meer; oude waarden worden genegeerd.
+    m.zelfiteraties = [];
+    if (!m.keuzepunten || typeof m.keuzepunten !== 'object' || Array.isArray(m.keuzepunten)) m.keuzepunten = {};
+    m.relaties = (m.relaties || []).map(r => Object.assign({ info: '', zekerheid: '', frequentie: '', bron: '' }, r, r.soort === 'A' ? { soort: 'I' } : {}));
     const max = m.activiteiten.reduce((x, a) => Math.max(x, idNummer(a.id) || 0), 0);
     const maxV = (m.vervallenIds || []).reduce((x, id) => Math.max(x, idNummer(id) || 0), 0);
     m.volgendeNummer = Math.max(m.volgendeNummer || 1, max + 1, maxV + 1);
@@ -214,6 +213,6 @@
   DSM.model = {
     leegModel, maakId, vind, vindRelatie, plakActiviteiten, wijzigActiviteit, relatiesVan,
     verwijderActiviteit, verplaatsActiviteit, verplaatsNaar, zetRelatie, wisRelatie, wijzigKenmerk,
-    wisselZelfiteratie, zetInstelling, analyseStatus, valideer, normaliseer, bewaarLokaal, laadLokaal
+    zetInstelling, analyseStatus, valideer, normaliseer, bewaarLokaal, laadLokaal
   };
 })(typeof window !== 'undefined' ? window : globalThis);

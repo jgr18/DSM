@@ -6,11 +6,11 @@
     ['.knop-link', 'start'], ['.versie', 'versies'], ['#status', 'verouderd'], ['#knop-analyse', 'analyse-uitvoeren'],
     ['.bestand', 'opslaan'], ['#modelnaam', 'opslaan'], ['#meta', 'versies'],
     ['.groeplabel', 'werkwijze'],
-    ['td.tear', 'tear'], ['td.diag.zelf', 'zelfiteratie'], ['td.diag', 'diagonaal'],
-    ['td.s-I', 'soort-I'], ['td.s-H', 'soort-H'], ['td.s-B', 'soort-B'], ['td.s-A', 'soort-A'], ['td.fb', 'terugkoppeling'],
+    ['td.tear', 'tear'], ['td.diag', 'diagonaal'],
+    ['td.s-I', 'soort-I'], ['td.s-H', 'soort-H'], ['td.s-B', 'soort-B'], ['td.s-V', 'soort-V'], ['td.fb', 'terugkoppeling'],
     ['td.blok', 'iteratieblok'], ['td.boven', 'terugkoppeling'],
     ['th.blokcel', 'iteratieblok'], ['th.blokkop', 'iteratieblok'], ['table.dsm', 'matrix-lezen'],
-    ['[data-zelf]', 'zelfiteratie'], ['[data-uitklap]', 'kenmerken'], ['[data-kenm]', 'kenmerken'],
+    ['[data-uitklap]', 'kenmerken'], ['[data-kenm]', 'kenmerken'],
     ['.tear-item', 'tear-velden'], ['#tear-paneel', 'tear-velden'], ['[data-naar-tear]', 'tear'],
     ['.maat.open', 'tear-regels'], ['.vergelijk-sc', 'vergelijken-basis'],
     ['.scen-kaart', 'scenarios'], ['.kaart-basis', 'scenarios'], ['[data-sc]', 'scenarios'], ['#sc-bron', 'scenarios'], ['#sc-naam', 'scenarios'],
@@ -20,9 +20,9 @@
     ['.blokken', 'iteratieblok'], ['.niveaus', 'parallel'], ['.impact', 'impact'], ['#impact-keus', 'impact'],
     ['#uitlegpaneel', 'soorten-vergelijking'], ['.uitlegpop', 'soorten-vergelijking'], ['.vergelijk', 'soorten-vergelijking'],
     ['[data-greep]', 'activiteiten'], ['#plak', 'activiteiten'], ['#plak-knop', 'activiteiten'], ['#snel', 'activiteiten'], ['#act-rijen', 'activiteiten'],
-    ['#mk', 'relaties'], ['#relpaneel', 'relaties'], ['.legenda-hint', 'soorten']
+    ['#keuzepaneel', 'keuzepunt'], ['[data-sc-keuze]', 'keuze-scenario'], ['.alt-label', 'keuzepunt'], ['#mk', 'relaties'], ['#relpaneel', 'relaties'], ['.legenda-hint', 'soorten']
   ];
-  const UITLEG = { I: 'soort-I', H: 'soort-H', B: 'soort-B', A: 'soort-A', Z: 'zelfiteratie', T: 'terugkoppeling', K: 'iteratieblok', X: 'tear', M: 'kenmerken' };
+  const UITLEG = { I: 'soort-I', H: 'soort-H', B: 'soort-B', V: 'soort-V', T: 'terugkoppeling', K: 'iteratieblok', X: 'tear', M: 'kenmerken' };
   const TAB = { activiteiten: 'activiteiten', relaties: 'relaties', analyse: 'analyse', vergelijking: 'vergelijking', scenarios: 'tears', rapport: 'rapport' };
 
   let aan = false, doel = null;

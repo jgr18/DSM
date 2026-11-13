@@ -135,7 +135,7 @@
     {
       "van": "A006",
       "naar": "A004",
-      "soort": "A",
+      "soort": "I",
       "info": "Materiaaleigenschappen (E-modulus, vloeigrens)",
       "zekerheid": "",
       "frequentie": "",
@@ -241,9 +241,7 @@
       "bron": ""
     }
   ],
-  "zelfiteraties": [
-    "A009"
-  ],
+  "zelfiteraties": [],
   "instellingen": {
     "wisselingVoorkeur": true,
     "maxExact": 8,

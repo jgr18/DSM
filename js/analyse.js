@@ -1,6 +1,6 @@
 /* DSM-werkbank — procesanalyse.
    Betekenis: relatie van → naar = "naar heeft informatie van van nodig"; van moet dus vóór naar staan.
-   1. Iteratieblokken: sterk samenhangende componenten (Tarjan). Zelfiteraties worden apart geteld.
+   1. Iteratieblokken: sterk samenhangende componenten (Tarjan).
    2. Blokken topologisch geordend; bij keuze gaat het blok met de laagste ID voor.
    3. Binnen elk blok een volgorde met deze doelvolgorde:
       harde voorwaarden respecteren → minder terugkoppelingen → (optioneel) minder terugkoppelingen

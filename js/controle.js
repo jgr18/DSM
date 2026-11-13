@@ -4,11 +4,10 @@
   const DSM = root.DSM;
   const M = DSM.model, A = DSM.analyse;
 
-  function bouw(namen, relaties, zelf) {
+  function bouw(namen, relaties) {
     const m = M.leegModel();
     M.plakActiviteiten(m, namen.join('\n'));
     (relaties || []).forEach(r => M.zetRelatie(m, r[0], r[1], r[2] || 'I'));
-    (zelf || []).forEach(id => M.wisselZelfiteratie(m, id));
     return m;
   }
   const blokLeden = res => res.blokken.map(b => b.leden.join(' '));
@@ -46,15 +45,6 @@
         const m = bouw(['a', 'b', 'c']); M.verplaatsActiviteit(m, 'A003', -1); M.verplaatsActiviteit(m, 'A003', -1);
         const r = A.analyseer(m);
         return { ok: gelijk(r.volgorde, ['A001', 'A002', 'A003']) && r.blokken.length === 3, detail: 'invoer ' + r.oorspronkelijk.join(' ') + ' → ' + r.volgorde.join(' ') };
-      }
-    },
-    {
-      naam: 'Zelfiteratie apart herkend',
-      uitleg: 'Een zelfiteratie maakt geen iteratieblok, maar wordt wel geteld.',
-      test() {
-        const r = A.analyseer(bouw(['a', 'b'], [['A001', 'A002']], ['A002']));
-        const b = r.blokken.find(x => x.leden[0] === 'A002');
-        return { ok: r.aantalIteratieblokken === 0 && r.aantalZelfiteraties === 1 && b.zelfiteratie === true, detail: 'zelfiteraties: ' + r.aantalZelfiteraties };
       }
     },
     {
@@ -124,9 +114,9 @@
     },
     {
       naam: 'Tear doorbreekt een cyclus; relatie blijft bewaard',
-      uitleg: 'A001 ↔ A002 is een blok. Een tear op de A-relatie A002 → A001 heft het blok op in het scenario; in het basismodel blijft de relatie staan.',
+      uitleg: 'A001 ↔ A002 is een blok. Een tear op de relatie A002 → A001 heft het blok op in het scenario; in het basismodel blijft de relatie staan.',
       test() {
-        const S = DSM.scenario, m = bouw(['a', 'b'], [['A001', 'A002', 'I'], ['A002', 'A001', 'A']]); S.zorgVoor(m);
+        const S = DSM.scenario, m = bouw(['a', 'b'], [['A001', 'A002', 'I'], ['A002', 'A001', 'I']]); S.zorgVoor(m);
         const sc = S.nieuwScenario(m, 'T'); const f = S.zetTear(m, sc.id, { van: 'A002', naar: 'A001', aanname: 'schatting', controleNa: 'A002' });
         const r = S.bereken(m, sc), basis = A.analyseer(m);
         return { ok: !f && r.aantalIteratieblokken === 0 && basis.aantalIteratieblokken === 1 && m.relaties.length === 2 && gelijk(r.volgorde, ['A001', 'A002']), detail: 'scenario: ' + blokLeden(r).join(' | ') + ' · basis: ' + blokLeden(basis).join(' | ') };
@@ -155,11 +145,49 @@
       naam: 'Scenario verouderd na wijziging; tear ongeldig zonder relatie',
       uitleg: 'Na het wissen van de getearde relatie in de basis staat het scenario op verouderd en wordt de tear als ongeldig gemeld.',
       test() {
-        const S = DSM.scenario, m = bouw(['a', 'b'], [['A001', 'A002', 'I'], ['A002', 'A001', 'A']]); S.zorgVoor(m);
+        const S = DSM.scenario, m = bouw(['a', 'b'], [['A001', 'A002', 'I'], ['A002', 'A001', 'I']]); S.zorgVoor(m);
         const sc = S.nieuwScenario(m, 'T'); S.zetTear(m, sc.id, { van: 'A002', naar: 'A001', aanname: 'x' }); S.bereken(m, sc);
         const voor = S.status(m, sc).status; M.wisRelatie(m, 'A002', 'A001');
         const na = S.status(m, sc).status, b = S.beoordeel(m, sc)[0];
         return { ok: voor === 'actueel' && na === 'verouderd' && !b.geldig && b.fouten.length === 1, detail: voor + ' → ' + na + '; ' + (b.fouten[0] ? b.fouten[0].melding : '') };
+      }
+    },
+    {
+      naam: 'Keuzepunt: opties en samenkomst afgeleid uit de relaties',
+      uitleg: 'A kiest tussen B en C (◆). Na B volgt D; D en C komen samen in E. Verwacht: optie B = B, D; optie C = C; samenkomst E.',
+      test() {
+        const m = bouw(['A', 'B', 'C', 'D', 'E'], [['A001', 'A002', 'V'], ['A001', 'A003', 'V'], ['A002', 'A004'], ['A004', 'A005'], ['A003', 'A005']]);
+        const k = DSM.keuze.keuzepunten(m)[0];
+        const o = k ? k.opties.map(x => x.leden.join(' ')) : [];
+        return { ok: !!k && k.id === 'A001' && gelijk(o, ['A002 A004', 'A003']) && gelijk(k.samenkomst, ['A005']), detail: k ? 'opties: ' + o.join(' | ') + ' · samenkomst: ' + k.samenkomst.join(' ') : 'geen keuzepunt' };
+      }
+    },
+    {
+      naam: 'Keuzepunt met drie opties; voorgangers horen er niet bij',
+      uitleg: 'Z levert aan A; A kiest uit B, C en D; B koppelt terug naar Z. Z hoort bij geen enkele optie.',
+      test() {
+        const m = bouw(['Z', 'A', 'B', 'C', 'D'], [['A001', 'A002'], ['A002', 'A003', 'V'], ['A002', 'A004', 'V'], ['A002', 'A005', 'V'], ['A003', 'A001']]);
+        const k = DSM.keuze.keuzepunten(m)[0], o = k.opties.map(x => x.leden.join(' '));
+        return { ok: k.opties.length === 3 && gelijk(o, ['A003', 'A004', 'A005']), detail: 'opties: ' + o.join(' | ') };
+      }
+    },
+    {
+      naam: 'Keuzepunt met maar één optie wordt gemeld',
+      uitleg: 'Eén ◆-relatie vanuit A geeft een melding met herstelactie.',
+      test() {
+        const m = bouw(['A', 'B'], [['A001', 'A002', 'V']]);
+        const k = DSM.keuze.keuzepunten(m)[0];
+        return { ok: k.meldingen.length === 1, detail: k.meldingen[0] ? k.meldingen[0].melding : 'geen melding' };
+      }
+    },
+    {
+      naam: 'Scenario met gekozen optie laat de andere optie weg',
+      uitleg: 'Zelfde model als de eerste keuzecontrole; in het scenario wordt optie C gekozen. Verwacht volgorde A, C, E.',
+      test() {
+        const S = DSM.scenario, m = bouw(['A', 'B', 'C', 'D', 'E'], [['A001', 'A002', 'V'], ['A001', 'A003', 'V'], ['A002', 'A004'], ['A004', 'A005'], ['A003', 'A005']]); S.zorgVoor(m);
+        const sc = S.nieuwScenario(m, 'T'); S.zetKeuze(m, sc.id, 'A001', 'A003');
+        const r = S.bereken(m, sc);
+        return { ok: gelijk(r.volgorde, ['A001', 'A003', 'A005']) && m.activiteiten.length === 5, detail: 'volgorde: ' + r.volgorde.join(' ') };
       }
     },
     {

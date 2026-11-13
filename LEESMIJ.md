@@ -1,6 +1,6 @@
-# DSM-werkbank
+# DSM
 
-**Versie 0.5** — het versienummer staat in de kop van de werkbank. Na een update laadt de browser dankzij `?v=0.5` achter de scripts en de opmaak de nieuwe bestanden.
+**Versie 0.6** — het versienummer staat in de kop. Na een update laadt de browser dankzij `?v=0.6` achter de scripts en de opmaak de nieuwe bestanden.
 
 Webtool voor de analyse van projecten en processen met een Design Structure Matrix (DSM). De tool draait volledig in de browser: er is geen server, database of account nodig.
 
@@ -10,23 +10,23 @@ Webtool voor de analyse van projecten en processen met een Design Structure Matr
 - Activiteiten toevoegen door te typen of te plakken uit Excel: één per regel, `naam` of `naam ⇥ verantwoordelijke`.
 - Elke activiteit krijgt een unieke, blijvende ID (A001, A002, …). Een verwijderde ID wordt nooit opnieuw uitgegeven.
 - Relaties vastleggen in de matrix. Een **rij** is de **ontvanger** (heeft informatie nodig) en een **kolom** is de **leverancier**. A → B betekent: B heeft informatie van A nodig.
-- Vier soorten relaties: **I** informatieafhankelijkheid, **H** harde uitvoeringsvoorwaarde, **B** bescherming, **A** toestemming voor een voorlopige aanname. Zelfiteraties leg je vast op de diagonaal.
+- Vier soorten relaties: **informatie** (blauw vakje zonder letter, toets I), **H** harde uitvoeringsvoorwaarde, **B** bescherming en **◆** voorwaardelijk (keuze, toets V).
 - Per relatie: welke informatie nodig is, en later eventueel zekerheid, frequentie en bron.
-- Met het toetsenbord snel invoeren: pijltjes, I/H/B/A, Delete en Enter.
+- Met het toetsenbord snel invoeren: pijltjes, I/H/B, Delete en Enter.
 
 **Analyse**
-- Iteratieblokken bepalen met het algoritme van Tarjan. Zelfiteraties worden apart herkend.
+- Iteratieblokken bepalen met het algoritme van Tarjan.
 - De blokken worden topologisch geordend. Bij een keuze gaat het blok met de laagste ID voor.
 - Binnen elk blok wordt de beste volgorde gezocht volgens deze doelvolgorde:
   1. harde voorwaarden respecteren;
   2. het aantal terugkoppelingen minimaliseren;
   3. (instelbaar) minder terugkoppelingen met wisseling van verantwoordelijke;
-  4. de totale terugkoppelafstand minimaliseren;
-  5. bij gelijkstand: laagste-ID-volgorde.
+  4. de totale terugkoppelafstand minimaliseren.
+  Op de achtergrond kiest de tool bij gelijke score steeds dezelfde volgorde, zodat de uitkomst reproduceerbaar is.
 - Blokken tot en met 8 activiteiten (instelbaar, maximaal 9) worden volledig doorzocht. De uitkomst is dan **bewezen optimaal** voor deze doelvolgorde.
 - Grotere blokken krijgen een gulzige start plus lokaal verplaatsen, tot er geen verbetering meer is of de tijdlimiet is bereikt. De tool meldt dan **"beste gevonden — niet bewezen"**, met de reden.
 - Een harde tegenspraak, een kring van alleen harde voorwaarden, wordt gemeld.
-- Alle activiteiten en relaties blijven behouden; alleen de volgorde verandert. Een iteratieblok is geen advies om taken samen te voegen of gelijktijdig uit te voeren.
+- Alle activiteiten en relaties blijven behouden; alleen de volgorde verandert. Een iteratieblok is een eerste aanknopingspunt voor nader onderzoek en procesverbetering.
 
 **Vergelijking**
 - De oorspronkelijke en de voorgestelde volgorde naast elkaar: het aantal terugkoppelingen (ook met wisseling van verantwoordelijke), de totale en grootste terugkoppelafstand, geschonden harde voorwaarden en de activiteiten per iteratieblok.
@@ -38,9 +38,31 @@ Webtool voor de analyse van projecten en processen met een Design Structure Matr
 - De analyse bewaart de invoerversie en de instellingen waarmee hij is berekend.
 - Na een relevante wijziging staat de analyse op **verouderd**.
 - Foutmeldingen noemen de bron (bijvoorbeeld het plakveld met regelnummer) en een herstelactie.
-- `controle.html` rekent vaste controlevoorbeelden door: ketens, cycli, losse blokken, zelfiteraties, harde voorwaarden en tegenspraken, gewijzigde regelvolgorde, actualiteit, ID's en een model van 100 activiteiten.
+- `controle.html` rekent vaste controlevoorbeelden door: ketens, cycli, losse blokken, harde voorwaarden en tegenspraken, gewijzigde regelvolgorde, actualiteit, ID's en een model van 100 activiteiten.
 
 **Nog niet beschikbaar:** het opgemaakte rapport (PDF en Excel met handleiding). Ook afdelingen, beschikbaarheidsdatums, doorlooptijd, capaciteit en simulatie zitten er nog niet in.
+
+## Wijzigingen in versie 0.6
+
+- **Voorwaardelijke relaties (◆, toets V) en keuzepunten:**
+  - Alle ◆-relaties vanuit één activiteit vormen een keuzepunt met twee of meer opties, waarvan er precies één wordt uitgevoerd.
+  - Welke activiteiten bij een optie horen en waar de opties samenkomen, leidt de DSM af uit de relaties. Per optie vul je een naam in; bij het keuzepunt een vraag.
+  - Bij Parallelle mogelijkheden staan opties als alternatief.
+  - In een scenario kies je per keuzepunt een optie en reken je de uitkomst door.
+  - Er zijn 4 nieuwe controles, dus 20 in totaal.
+- **Kop:** het woord "werkbank" is weg uit de kop van de DSM en van de controlepagina.
+- **Zelfiteratie verwijderd:** de functie is helemaal weg. De diagonaal toont alleen nog het volgnummer. Oude bestanden met zelfiteraties gaan gewoon open; de zelfiteraties worden genegeerd.
+- **Kengetallen:** "maten" heten nu overal "kengetallen".
+- **Doelvolgorde:** de gelijkstandregel ("laagste ID eerst") staat niet meer in de doelvolgorde. Op de achtergrond blijft hij bestaan, zodat dezelfde invoer altijd dezelfde uitkomst geeft.
+- **Iteratieblok:** wordt nu uitgelegd als een eerste aanknopingspunt voor nader onderzoek en procesverbetering, en niet meer als "geen advies".
+- **Helppagina, figuur:** een eigen Nederlandstalige figuur met de vier basispatronen: sequentieel, parallel, gekoppeld en voorwaardelijk. Elk patroon staat er als stroomschema en als DSM, met uitleg. De figuur is gebaseerd op Eppinger & Browning, figuur 6.2.
+- **Ook in deze versie** (al eerder gemaakt, na 0.5):
+
+  - **Informatie en Aanname toegestaan samengevoegd:** de soorten I en A zijn nu één soort. Het verschil voegde voor de analyse niets toe: boven de diagonaal geldt voor beide dat er kans op rework is.
+  - **Weergave:** een informatierelatie is een blauw vakje zonder letter. Alleen H en B hebben nog een letter.
+  - **Toets A:** vervallen. Oude bestanden met A worden bij het openen automatisch omgezet naar informatie.
+  - **Tear op een informatierelatie:** mag, met de waarschuwing "Kans op rework".
+  - **Helppagina:** aangepast aan de samenvoeging, en noemt de tool overal "de DSM".
 
 ## Wijzigingen in versie 0.5
 
@@ -128,6 +150,7 @@ Pak de map uit en dubbelklik op `index.html`. De tool werkt in een recente versi
 | `css/style.css` | Opmaak |
 | `js/model.js` | Gegevensmodel, ID's, validatie en opslag |
 | `js/analyse.js` | Tarjan, ordening, optimalisatie, maten en impact |
+| `js/keuze.js` | Voorwaardelijke relaties en keuzepunten |
 | `js/scenario.js` | Scenario's en tears |
 | `js/helpmodus.js` | Helpmodus: van onderdeel naar uitleg |
 | `js/app.js` | Schermen en bediening |
