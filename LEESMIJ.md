@@ -1,6 +1,6 @@
 # DSM-werkbank
 
-**Versie 0.4** — het versienummer staat in de kop van de werkbank. Na een update laadt de browser dankzij `?v=0.4` achter de scripts en de opmaak de nieuwe bestanden.
+**Versie 0.5** — het versienummer staat in de kop van de werkbank. Na een update laadt de browser dankzij `?v=0.5` achter de scripts en de opmaak de nieuwe bestanden.
 
 Webtool voor de analyse van projecten en processen met een Design Structure Matrix (DSM). De tool draait volledig in de browser: er is geen server, database of account nodig.
 
@@ -41,6 +41,12 @@ Webtool voor de analyse van projecten en processen met een Design Structure Matr
 - `controle.html` rekent vaste controlevoorbeelden door: ketens, cycli, losse blokken, zelfiteraties, harde voorwaarden en tegenspraken, gewijzigde regelvolgorde, actualiteit, ID's en een model van 100 activiteiten.
 
 **Nog niet beschikbaar:** het opgemaakte rapport (PDF en Excel met handleiding). Ook afdelingen, beschikbaarheidsdatums, doorlooptijd, capaciteit en simulatie zitten er nog niet in.
+
+## Wijzigingen in versie 0.5
+
+- **Activiteiten verplaatsen:** pak een activiteit bij de ID (⠿) en sleep hem naar de nieuwe plek. Dat werkt met de muis en op een touchscreen. Een groenblauwe lijn laat zien waar de activiteit terechtkomt, en met <kbd>Esc</kbd> breek je het slepen af.
+- **Met het toetsenbord:** <kbd>Alt</kbd> + <kbd>↑</kbd> of <kbd>↓</kbd> op de ID.
+- **Knoppen:** de pijltjesknoppen zijn weg; het kruisje om te verwijderen blijft.
 
 ## Wijzigingen in versie 0.4: help en uitleg
 

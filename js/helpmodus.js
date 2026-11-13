@@ -19,7 +19,7 @@
     ['.maat', 'maten'], ['[data-weergave]', 'weergave'], ['[data-inst]', 'instellingen'],
     ['.blokken', 'iteratieblok'], ['.niveaus', 'parallel'], ['.impact', 'impact'], ['#impact-keus', 'impact'],
     ['#uitlegpaneel', 'soorten-vergelijking'], ['.uitlegpop', 'soorten-vergelijking'], ['.vergelijk', 'soorten-vergelijking'],
-    ['#plak', 'activiteiten'], ['#plak-knop', 'activiteiten'], ['#snel', 'activiteiten'], ['#act-rijen', 'activiteiten'],
+    ['[data-greep]', 'activiteiten'], ['#plak', 'activiteiten'], ['#plak-knop', 'activiteiten'], ['#snel', 'activiteiten'], ['#act-rijen', 'activiteiten'],
     ['#mk', 'relaties'], ['#relpaneel', 'relaties'], ['.legenda-hint', 'soorten']
   ];
   const UITLEG = { I: 'soort-I', H: 'soort-H', B: 'soort-B', A: 'soort-A', Z: 'zelfiteratie', T: 'terugkoppeling', K: 'iteratieblok', X: 'tear', M: 'kenmerken' };
@@ -65,7 +65,7 @@
     e.preventDefault(); e.stopPropagation();
     const x = bepaal(e.target); open(x ? x.id : 'start');
   }, true);
-  ['mousedown', 'change', 'input', 'focusin'].forEach(t => document.addEventListener(t, e => { if (aan && !(balk && balk.contains(e.target)) && e.target !== knop) { e.stopPropagation(); if (t === 'mousedown') e.preventDefault(); } }, true));
+  ['pointerdown', 'mousedown', 'change', 'input', 'focusin'].forEach(t => document.addEventListener(t, e => { if (aan && !(balk && balk.contains(e.target)) && e.target !== knop) { e.stopPropagation(); if (t === 'mousedown' || t === 'pointerdown') e.preventDefault(); } }, true));
 
   window.DSM = window.DSM || {}; window.DSM.helpmodus = { zet, bepaal, aan: () => aan };
 })();

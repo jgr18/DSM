@@ -119,13 +119,11 @@
       const inn = rel.filter(r => r.naar === a.id).map(r => r.van).join(' ') || '—';
       const uit = rel.filter(r => r.van === a.id).map(r => r.naar).join(' ') || '—';
       return '<tr data-id="' + a.id + '" data-zoek="' + esc((a.id + ' ' + a.naam + ' ' + a.eigenaar).toLowerCase()) + '">' +
-        '<td class="num klein">' + (i + 1) + '</td><td class="mono"><b>' + a.id + '</b></td>' +
+        '<td class="num klein">' + (i + 1) + '</td><td class="mono greep" data-greep="' + a.id + '" tabindex="0" title="Sleep om ' + a.id + ' te verplaatsen. Met het toetsenbord: Alt + pijl omhoog of omlaag." aria-label="' + a.id + ' verplaatsen: sleep, of Alt + pijl omhoog of omlaag"><span class="greep-icoon" aria-hidden="true">⠿</span><b>' + a.id + '</b></td>' +
         '<td><label class="verborgen" for="n-' + a.id + '">Naam ' + a.id + '</label><input id="n-' + a.id + '" data-veld="naam" data-id="' + a.id + '" value="' + esc(a.naam) + '"></td>' +
         '<td><label class="verborgen" for="e-' + a.id + '">Verantwoordelijke ' + a.id + '</label><input id="e-' + a.id + '" data-veld="eigenaar" data-id="' + a.id + '" value="' + esc(a.eigenaar) + '" placeholder="—"></td>' +
         '<td class="mono klein">' + inn + '</td><td class="mono klein">' + uit + '</td>' +
-        '<td class="rechts"><button class="knop klein-k" data-act="op" data-id="' + a.id + '" aria-label="' + a.id + ' omhoog">↑</button> ' +
-        '<button class="knop klein-k" data-act="neer" data-id="' + a.id + '" aria-label="' + a.id + ' omlaag">↓</button> ' +
-        '<button class="knop klein-k gevaar" data-act="weg" data-id="' + a.id + '" aria-label="' + a.id + ' verwijderen">✕</button></td></tr>';
+        '<td class="rechts"><button class="knop klein-k gevaar" data-act="weg" data-id="' + a.id + '" aria-label="' + a.id + ' verwijderen" title="' + a.id + ' verwijderen">✕</button></td></tr>';
     }).join('');
     inhoud.innerHTML =
       '<section class="kolom smal">' +
@@ -133,15 +131,61 @@
         '<p class="uitleg">Eén activiteit per regel: alleen een naam, of <span class="mono">naam ⇥ verantwoordelijke</span>. Plakken uit Excel werkt direct (tab of puntkomma). Nieuwe ID\'s worden automatisch uitgegeven en nooit hergebruikt.</p>' +
         '<label class="veld">Regels<textarea id="plak" rows="8" class="mono" placeholder="Klanteisen vastleggen&#9;Productmanager&#10;Conceptontwerp&#9;Ontwerp"></textarea></label>' +
         '<div class="rij"><button class="knop primair" id="plak-knop">Controleren en toevoegen</button><button class="knop" id="plak-wis">Wissen</button></div></div>' +
-        '<div class="paneel"><p class="klein"><b>Volgorde</b> in deze lijst is de oorspronkelijke procesvolgorde; de analyse vergelijkt daarmee. <b>Verwijderen</b> toont eerst welke relaties vervallen; de ID blijft gereserveerd.</p>' +
+        '<div class="paneel"><p class="klein"><b>Volgorde</b> in deze lijst is de oorspronkelijke procesvolgorde; de analyse vergelijkt daarmee. <b>Verplaatsen:</b> pak een activiteit bij de ID (⠿) en sleep hem naar de nieuwe plek, of gebruik Alt + ↑ / ↓ op de ID. <b>Verwijderen</b> toont eerst welke relaties vervallen; de ID blijft gereserveerd.</p>' +
         (m.activiteiten.length ? '' : '<p class="klein">Nog leeg? Kies <b>Voorbeeld</b> rechtsboven om met een voorbeeldmodel te beginnen.</p>') + '</div>' +
       '</section>' +
       '<section class="paneel breed"><div class="rij tussen"><div><h2>Activiteiten</h2><span class="klein">' + m.activiteiten.length + ' activiteiten</span></div>' +
         '<label class="rij klein">Zoeken <input id="zoek" type="search" placeholder="ID, naam of verantwoordelijke"></label></div>' +
-        '<div class="tabelkader"><table class="lijst"><thead><tr><th class="num">Volg.</th><th>ID</th><th>Activiteit</th><th>Verantwoordelijke</th><th>Ontvangt van</th><th>Levert aan</th><th class="rechts">Acties</th></tr></thead>' +
+        '<div class="tabelkader"><table class="lijst"><thead><tr><th class="num">Volg.</th><th>ID</th><th>Activiteit</th><th>Verantwoordelijke</th><th>Ontvangt van</th><th>Levert aan</th><th class="rechts">Verwijderen</th></tr></thead>' +
         '<tbody id="act-rijen">' + rijen + '</tbody><tfoot><tr><td></td><td class="mono klein">' + M.maakId(m.volgendeNummer) + '</td><td colspan="5"><label class="verborgen" for="snel">Nieuwe activiteit</label><input id="snel" placeholder="Typ een naam en druk Enter"></td></tr></tfoot></table></div>' +
       '</section>';
   }
+
+  /* Slepen aan de ID (muis en touch) en Alt + pijl (toetsenbord). */
+  let sleep = null;
+  function zichtbareRijen() { return [...document.querySelectorAll('#act-rijen tr')].filter(tr => tr.style.display !== 'none'); }
+  function wisDropLijn() { document.querySelectorAll('#act-rijen .drop-boven, #act-rijen .drop-onder').forEach(x => x.classList.remove('drop-boven', 'drop-onder')); }
+  inhoud.addEventListener('pointerdown', e => {
+    const g = e.target.closest('[data-greep]'); if (!g || ui.tab !== 'activiteiten' || e.button > 0) return;
+    e.preventDefault();
+    const tr = g.closest('tr');
+    sleep = { id: g.dataset.greep, tr, startY: e.clientY, bezig: false, doel: null };
+    g.setPointerCapture(e.pointerId);
+  });
+  inhoud.addEventListener('pointermove', e => {
+    if (!sleep) return;
+    if (!sleep.bezig && Math.abs(e.clientY - sleep.startY) < 4) return;
+    sleep.bezig = true; sleep.tr.classList.add('sleept'); document.body.classList.add('bezig-slepen');
+    const rijen = zichtbareRijen(); wisDropLijn();
+    let doelTr = null, onder = false;
+    for (const tr of rijen) { const r = tr.getBoundingClientRect(); if (e.clientY < r.top + r.height / 2) { doelTr = tr; break; } }
+    if (!doelTr) { doelTr = rijen[rijen.length - 1]; onder = true; }
+    if (doelTr) doelTr.classList.add(onder ? 'drop-onder' : 'drop-boven');
+    sleep.doel = doelTr ? { id: doelTr.dataset.id, onder } : null;
+    if (e.clientY < 60) window.scrollBy(0, -12); else if (e.clientY > window.innerHeight - 60) window.scrollBy(0, 12);
+  });
+  function stopSlepen(uitvoeren) {
+    if (!sleep) return;
+    const s = sleep; sleep = null; wisDropLijn(); s.tr.classList.remove('sleept'); document.body.classList.remove('bezig-slepen');
+    if (!uitvoeren || !s.bezig || !s.doel) return;
+    const lijst = m.activiteiten, van = lijst.findIndex(a => a.id === s.id);
+    let naar = lijst.findIndex(a => a.id === s.doel.id) + (s.doel.onder ? 1 : 0);
+    if (naar > van) naar--;
+    if (M.verplaatsNaar(m, s.id, naar)) {
+      na(); renderActiviteiten();
+      const rij = inhoud.querySelector('#act-rijen tr[data-id="' + s.id + '"]'); if (rij) { rij.classList.add('net-verplaatst'); rij.querySelector('[data-greep]').focus({ preventScroll: true }); }
+      toonOk(s.id + ' ' + naam(s.id) + ' verplaatst naar plaats ' + (naar + 1) + '.');
+    }
+  }
+  inhoud.addEventListener('pointerup', () => stopSlepen(true));
+  inhoud.addEventListener('pointercancel', () => stopSlepen(false));
+  document.addEventListener('keydown', e => { if (sleep && e.key === 'Escape') stopSlepen(false); });
+  inhoud.addEventListener('keydown', e => {
+    const g = e.target.closest && e.target.closest('[data-greep]'); if (!g || !e.altKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+    e.preventDefault();
+    const id = g.dataset.greep, i = m.activiteiten.findIndex(a => a.id === id);
+    if (M.verplaatsNaar(m, id, i + (e.key === 'ArrowUp' ? -1 : 1))) { na(); renderActiviteiten(); const ng = inhoud.querySelector('[data-greep="' + id + '"]'); if (ng) ng.focus(); }
+  });
 
   function verwerkPlak(tekst) {
     const res = M.plakActiviteiten(m, tekst);
@@ -158,10 +202,7 @@
       if (e.target.id === 'plak-wis') { $('#plak').value = ''; return; }
       const b = e.target.closest('[data-act]'); if (!b) return;
       const id = b.dataset.id;
-      if (b.dataset.act === 'op' || b.dataset.act === 'neer') {
-        M.verplaatsActiviteit(m, id, b.dataset.act === 'op' ? -1 : 1); na(); renderActiviteiten();
-        const nb = inhoud.querySelector('[data-act="' + b.dataset.act + '"][data-id="' + id + '"]'); if (nb) nb.focus();
-      } else if (b.dataset.act === 'weg') {
+      if (b.dataset.act === 'weg') {
         const rel = M.relatiesVan(m, id);
         const tekst = 'Activiteit ' + id + ' "' + naam(id) + '" verwijderen?' + (rel.length ? '\n\nDeze ' + rel.length + ' relatie(s) vervallen ook:\n' + rel.map(r => r.van + ' → ' + r.naar).join('\n') : '') + '\n\nDe ID ' + id + ' wordt niet opnieuw uitgegeven.';
         if (!confirm(tekst)) return;

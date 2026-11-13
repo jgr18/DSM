@@ -104,6 +104,15 @@
     gewijzigd(m, true);
   }
 
+  /* Zet activiteit id op plaats doel (0 = bovenaan) in de oorspronkelijke volgorde. */
+  function verplaatsNaar(m, id, doel) {
+    const i = m.activiteiten.findIndex(a => a.id === id); if (i < 0) return false;
+    doel = Math.max(0, Math.min(m.activiteiten.length - 1, doel));
+    if (doel === i) return false;
+    const [a] = m.activiteiten.splice(i, 1); m.activiteiten.splice(doel, 0, a);
+    gewijzigd(m, true); return true;
+  }
+
   function zetRelatie(m, van, naar, soort) {
     if (van === naar) return { bron: 'Relaties, cel ' + naar + '/' + van, melding: 'Een activiteit kan geen informatie van zichzelf ontvangen.', herstel: 'Markeer een zelfiteratie door op de diagonaal te klikken.' };
     if (!vind(m, van) || !vind(m, naar)) return { bron: 'Relaties', melding: 'Onbekende activiteit in relatie ' + van + ' → ' + naar + '.', herstel: 'Kies leverancier en ontvanger uit de bestaande activiteiten.' };
@@ -204,7 +213,7 @@
   DSM.SOORTEN = SOORTEN;
   DSM.model = {
     leegModel, maakId, vind, vindRelatie, plakActiviteiten, wijzigActiviteit, relatiesVan,
-    verwijderActiviteit, verplaatsActiviteit, zetRelatie, wisRelatie, wijzigKenmerk,
+    verwijderActiviteit, verplaatsActiviteit, verplaatsNaar, zetRelatie, wisRelatie, wijzigKenmerk,
     wisselZelfiteratie, zetInstelling, analyseStatus, valideer, normaliseer, bewaarLokaal, laadLokaal
   };
 })(typeof window !== 'undefined' ? window : globalThis);

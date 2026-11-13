@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Help — DSM-werkbank</title>
-<link rel="stylesheet" href="css/style.css?v=0.4">
+<link rel="stylesheet" href="css/style.css?v=0.5">
 <style>
   .help { max-width: 1240px; margin: 0 auto; padding: 24px; display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 32px; align-items: start; }
   .toc { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow: auto; background: var(--paneel); border: 1px solid var(--lijn); border-radius: 10px; padding: 16px; font-size: 13px; }
@@ -36,7 +36,7 @@
 </style>
 </head>
 <body>
-<header class="kop"><div class="kop-links"><span class="merk">DSM-werkbank</span> <span class="versie">v0.4</span><span class="meta">Help en verantwoording</span></div>
+<header class="kop"><div class="kop-links"><span class="merk">DSM-werkbank</span> <span class="versie">v0.5</span><span class="meta">Help en verantwoording</span></div>
 <div class="kop-rechts"><button class="knop-donker" onclick="window.print()">Afdrukken</button><a href="index.html" style="color:#F4F4F2">← Naar de werkbank</a></div></header>
 
 <div class="help">
@@ -83,11 +83,12 @@
 <p>De tabbladen volgen drie stappen: <b>1 Invoer</b> (Activiteiten, Relaties), <b>2 Analyse</b> (DSM analyse, Vergelijking, Scenario's &amp; tears) en <b>3 Rapport</b>.</p>
 <h3 id="activiteiten">Activiteiten</h3>
 <p>Typ een activiteit, of plak een lijst uit Excel: één per regel, met eventueel een tab of puntkomma en dan de verantwoordelijke. Elke activiteit krijgt een vaste ID (A001, A002, …). Een ID wordt nooit opnieuw uitgegeven, ook niet na verwijderen. Zo blijven verwijzingen in opgeslagen modellen en rapporten eenduidig.</p>
-<p>De volgorde in de lijst is de <b>oorspronkelijke procesvolgorde</b>. De analyse vergelijkt haar voorstel daarmee. Met ↑ en ↓ verander je die volgorde. Verwijder je een activiteit, dan zie je eerst welke relaties vervallen.</p>
+<p>De volgorde in de lijst is de <b>oorspronkelijke procesvolgorde</b>. De analyse vergelijkt haar voorstel daarmee. Om die volgorde te veranderen pak je een activiteit bij de ID (⠿) en sleep je hem naar de nieuwe plek; een groenblauwe lijn laat zien waar hij komt. Met het toetsenbord: zet de focus op de ID en gebruik <kbd>Alt</kbd> + <kbd>↑</kbd> of <kbd>↓</kbd>. Verwijder je een activiteit, dan zie je eerst welke relaties vervallen.</p>
 <h3 id="relaties">Relaties invoeren</h3>
 <p>Klik in de rij van de ontvanger op de kolom van de leverancier en kies rechts een soort. Rechts zie je ook de uitleg van de soort die in het vakje staat. Vul bij <b>Welke informatie is nodig?</b> kort in waar het om gaat; dat maakt de analyse later goed te controleren.</p>
 <h3 id="toetsenbord">Toetsenbord</h3>
 <p>Klik eerst in de matrix. Daarna: pijltjes = cel verplaatsen · <kbd>I</kbd> <kbd>H</kbd> <kbd>B</kbd> <kbd>A</kbd> = soort kiezen · <kbd>Delete</kbd> of <kbd>0</kbd> = relatie wissen · <kbd>Enter</kbd> = volgende cel in de rij · <kbd>spatiebalk</kbd> op de diagonaal = zelfiteratie aan of uit.</p>
+<p>Op <b>Activiteiten</b>: zet de focus op de ID van een activiteit (klik erop of gebruik <kbd>Tab</kbd>) en verplaats hem met <kbd>Alt</kbd> + <kbd>↑</kbd> of <kbd>↓</kbd>. Tijdens het slepen met de muis breekt <kbd>Esc</kbd> het slepen af.</p>
 <h3 id="kenmerken">Aanvullende kenmerken</h3>
 <p>Per relatie kun je zekerheid, frequentie en bron vastleggen. Een witte stip in het vakje betekent dat er kenmerken zijn ingevuld. De kenmerken tellen niet mee in de berekening; ze zijn er voor de controleerbaarheid en de rapportage.</p>
 
@@ -161,7 +162,7 @@
 
 <h2 id="controleerbaarheid">Controleerbaarheid</h2>
 <h3 id="versies">Versies</h3>
-<p>Elke wijziging verhoogt de <b>invoerversie</b>, die in de kop staat. Een analyse onthoudt bij welke invoerversie en instellingen hij is berekend. Het label <b>v0.4</b> naast de naam is de versie van de werkbank zelf.</p>
+<p>Elke wijziging verhoogt de <b>invoerversie</b>, die in de kop staat. Een analyse onthoudt bij welke invoerversie en instellingen hij is berekend. Het label <b>v0.5</b> naast de naam is de versie van de werkbank zelf.</p>
 <h3 id="verouderd">Verouderd</h3>
 <p>Wijzig je activiteiten, relaties of instellingen na een analyse, dan staat de analyse op <b>verouderd</b>. Je ziet de oude uitkomst nog wel, met een balk en de knop <b>Opnieuw berekenen</b>. Hetzelfde geldt voor scenario's, ook als de tears zijn gewijzigd. Is een getearde relatie inmiddels verdwenen of een harde voorwaarde geworden, dan meldt de werkbank dat met een herstelactie en telt die tear niet mee.</p>
 <h3 id="controlepagina">Controlepagina</h3>
@@ -202,7 +203,7 @@
 <tr><td><b>Verouderd</b></td><td>Een analyse of scenario dat is berekend vóór de laatste wijziging.</td></tr>
 <tr><td><b>Zelfiteratie</b></td><td>Herhaling binnen één activiteit, vastgelegd op de diagonaal.</td></tr>
 </table>
-<p class="klein">DSM-werkbank v0.4 · <a href="index.html">Naar de werkbank</a> · <a href="controle.html">Controlepagina</a></p>
+<p class="klein">DSM-werkbank v0.5 · <a href="index.html">Naar de werkbank</a> · <a href="controle.html">Controlepagina</a></p>
 </main>
 </div>
 </body>
