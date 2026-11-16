@@ -74,17 +74,44 @@
     } else if (a === 'openen') {
       $('#bestandkiezer').click();
     } else if (a === 'opslaan') {
-      const blob = new Blob([JSON.stringify(m, null, 2)], { type: 'application/json' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = (m.naam || 'model').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '_') + '_v' + m.invoerversie + '.json';
-      document.body.appendChild(link); link.click(); link.remove();
-      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-      toonOk('Modelbestand opgeslagen (invoerversie ' + m.invoerversie + ').');
+      opslaanExcel();
     }
   });
+  /* ---------- opslaan en openen ---------- */
+  function download(naam, data, type) {
+    const blob = new Blob([data], { type }), link = document.createElement('a');
+    link.href = URL.createObjectURL(blob); link.download = naam;
+    document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1500);
+  }
+  const bestandsnaam = ext => (m.naam || 'model').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '_') + '_v' + m.invoerversie + ext;
+  function opslaanExcel() {
+    if (!m.activiteiten.length) { toonFouten([{ bron: 'Opslaan', melding: 'Er zijn nog geen activiteiten om op te slaan.', herstel: 'Voeg eerst activiteiten toe.' }]); return; }
+    const naam = bestandsnaam('.xlsx');
+    download(naam, DSM.xlsx.maak(DSM.excelio.werkbestandBladen(m)), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    toonOk('Werkbestand opgeslagen als ' + naam + ': invoer en uitvoer van de analyse in één Excel-bestand. Je kunt het later weer openen met "Openen…".');
+  }
+  function opslaanJson() {
+    const naam = bestandsnaam('.json');
+    download(naam, JSON.stringify(m, null, 2), 'application/json');
+    toonOk('Reservekopie opgeslagen als ' + naam + ' (invoerversie ' + m.invoerversie + ').');
+  }
   $('#bestandkiezer').addEventListener('change', e => {
     const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    if (/\.xlsx$/i.test(f.name)) {
+      const lx = new FileReader();
+      lx.onload = async () => {
+        let res;
+        try { res = await DSM.excelio.leesWerkbestand(lx.result, f.name); }
+        catch (err) { toonFouten([{ bron: f.name, melding: 'Het Excel-bestand kon niet worden gelezen (' + err.message + ').', herstel: 'Open een werkbestand dat met "Opslaan" uit de DSM is gemaakt.' }]); return; }
+        if (!res.model) { toonFouten(res.fouten, 'Werkbestand niet geopend'); return; }
+        if (heeftInhoud() && !confirm('Het huidige model vervangen door "' + f.name + '"?')) return;
+        laadModel(res.model, 'Werkbestand geopend: ' + f.name + ' (' + res.model.activiteiten.length + ' activiteiten, ' + res.model.relaties.length + ' relaties). Voer de analyse opnieuw uit.');
+        if (res.fouten.length) toonFouten(res.fouten, res.fouten.length + ' regel(s) niet overgenomen');
+      };
+      lx.readAsArrayBuffer(f);
+      return;
+    }
     const lezer = new FileReader();
     lezer.onload = () => {
       let data;
@@ -897,12 +924,125 @@
     }
   });
 
-  /* ================= RAPPORT ================= */
-  function renderRapport() {
-    inhoud.innerHTML = '<section class="paneel breed"><h2>Rapportage</h2><p class="uitleg">Het opgemaakte rapport (PDF en Excel met handleiding) volgt in de volgende versie. Tot die tijd:</p><ul class="uitleg">' +
-      '<li><b>Opslaan</b> rechtsboven bewaart het complete model met invoerversie, instellingen en analyse als .json-bestand;</li>' +
-      '<li>op <b>DSM analyse</b> kun je de matrix afdrukken of als PDF bewaren via de afdrukfunctie van je browser (Ctrl+P).</li></ul></section>';
+  /* ================= EXPORT & AFDRUKKEN ================= */
+  const AFDRUKDELEN = [
+    ['samenvatting', 'Samenvatting'], ['activiteiten', 'Activiteitenlijst'], ['relaties', 'Relatielijst'],
+    ['oorspronkelijk', 'DSM oorspronkelijke volgorde'], ['voorgesteld', 'DSM voorgestelde volgorde'], ['optimalisatie', 'Optimalisatie per blok'],
+    ['vergelijking', 'Vergelijking en parallelle mogelijkheden'], ['keuzepunten', 'Keuzepunten'], ['scenarios', "Scenario's & tears"], ['legenda', 'Legenda en leeswijzer']];
+  const RESULTAAT = ['samenvatting', 'voorgesteld', 'vergelijking'];
+  ui.afdruk = ui.afdruk || { samenvatting: true, activiteiten: false, relaties: false, oorspronkelijk: false, voorgesteld: true, optimalisatie: true, vergelijking: true, keuzepunten: true, scenarios: true, legenda: true };
+
+  function afdrukMatrix(volg, opties, blokbron) {
+    const cel = Math.max(11, Math.min(26, Math.floor(720 / Math.max(volg.length, 1))));
+    return '<div class="matrixkader afdrukmatrix" data-afdrukvolg="' + volg.join(' ') + '" data-blokbron="' + (blokbron || 'basis') + '" style="--cel:' + cel + 'px">' + bouwMatrix(volg, opties).replace('<table class="dsm', '<table style="--cel:' + cel + 'px;--celtekst:' + (cel >= 20 ? 11 : 9) + 'px" class="dsm') + '</div>';
   }
+  const kengetalTabel = (kol, rijen) => '<table class="lijst"><thead><tr><th>Kengetal</th>' + kol.map(k => '<th class="num">' + k + '</th>').join('') + '</tr></thead><tbody>' +
+    rijen.map(r => '<tr><td>' + r[0] + '</td>' + r.slice(1).map(v => '<td class="num">' + v + '</td>').join('') + '</tr>').join('') + '</tbody></table>';
+
+  function renderRapport() {
+    const a = m.analyse, datum = new Date().toLocaleString('nl-NL'), k = ui.afdruk;
+    const actueel = a && a.structuurversie === m.structuurversie && a.instellingenversie === m.instellingenversie;
+    const bronBasis = 'Model "' + esc(m.naam) + '" · invoerversie ' + m.invoerversie + (a ? ' · analyse op invoerversie ' + a.invoerversie + (actueel ? '' : ' (verouderd)') : '') + ' · ' + datum;
+    let n = 0, h = '';
+    const kop = (titel, bron) => '<div' + (n++ ? ' class="pagina-breuk"' : '') + '><h2>' + titel + '</h2><div class="bron">' + (bron || bronBasis) + '</div></div>';
+    const geenA = '<p class="klein">Nog geen analyse. Klik rechtsboven op <b>Analyse uitvoeren</b>.</p>';
+    const bi = a ? blokInfo(a) : null;
+    const mo = a && a.matenOorspronkelijk, mv = a && a.matenVoorgesteld;
+    if (k.samenvatting) {
+      h += kop('Samenvatting — ' + esc(m.naam));
+      h += '<p>' + m.activiteiten.length + ' activiteiten · ' + m.relaties.length + ' relaties' + (m.scenarios.length ? ' · ' + m.scenarios.length + ' scenario(\'s)' : '') + '.</p>';
+      if (a) {
+        h += kengetalTabel(['Oorspronkelijk', 'Voorgesteld'], [['Terugkoppelingen', mo.terugkoppelingen, mv.terugkoppelingen], ['… met wisseling van verantwoordelijke', mo.metWissel, mv.metWissel], ['Totale terugkoppelafstand', mo.totaleAfstand, mv.totaleAfstand], ['Harde voorwaarden geschonden', mo.hardeSchendingen, mv.hardeSchendingen], ['Iteratieblokken (≥ 2 activiteiten)', a.aantalIteratieblokken, a.aantalIteratieblokken], ['Activiteiten in grootste blok', a.grootsteBlok, a.grootsteBlok]]) +
+          '<p class="klein">Uitkomst: <b>' + (a.bewezen ? 'Optimaal — bewezen' : 'Beste gevonden — niet bewezen') + '</b> voor de doelvolgorde.' + (actueel ? '' : ' <b>Let op:</b> de analyse is verouderd; voer hem opnieuw uit voor een actuele afdruk.') + '</p>';
+        const meld = [];
+        a.tegenspraken.forEach(t => meld.push('Harde tegenspraak: ' + t.leden.join(' ↔ ') + '.'));
+        K.keuzepunten(m).forEach(x => x.meldingen.forEach(y => meld.push(y.bron + ': ' + y.melding)));
+        if (meld.length) h += '<p class="klein"><b>Meldingen:</b></p><ul class="klein">' + meld.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
+      } else h += geenA;
+    }
+    if (k.activiteiten) {
+      h += kop('Activiteiten', bronBasis + ' · in de oorspronkelijke volgorde');
+      h += '<table class="lijst"><thead><tr><th class="num">#</th><th>ID</th><th>Activiteit</th><th>Verantwoordelijke</th></tr></thead><tbody>' +
+        m.activiteiten.map((x, i) => '<tr><td class="num">' + (i + 1) + '</td><td class="mono"><b>' + x.id + '</b></td><td>' + esc(x.naam) + '</td><td>' + esc(x.eigenaar || '') + '</td></tr>').join('') + '</tbody></table>';
+    }
+    if (k.relaties) {
+      const p0 = {}; m.activiteiten.forEach((x, i) => { p0[x.id] = i; });
+      h += kop('Relaties', bronBasis + ' · ontvanger heeft iets nodig van leverancier');
+      h += '<table class="lijst"><thead><tr><th>Ontvanger</th><th>Leverancier</th><th>Soort</th><th>Welke informatie</th><th>Zekerheid</th><th>Frequentie</th><th>Bron</th></tr></thead><tbody>' +
+        m.relaties.slice().sort((x, y) => (p0[x.naar] - p0[y.naar]) || (p0[x.van] - p0[y.van])).map(r => '<tr><td><span class="mono"><b>' + r.naar + '</b></span> ' + esc(naam(r.naar)) + '</td><td><span class="mono"><b>' + r.van + '</b></span> ' + esc(naam(r.van)) + '</td><td>' + chipSoort(r.soort, 'vertical-align:middle') + ' ' + SOORTEN[r.soort].kort + '</td><td>' + esc(r.info || '') + '</td><td>' + esc(r.zekerheid || '') + '</td><td>' + esc(r.frequentie || '') + '</td><td>' + esc(r.bron || '') + '</td></tr>').join('') + '</tbody></table>';
+    }
+    if (k.oorspronkelijk) h += kop('DSM — oorspronkelijke volgorde', bronBasis + ' · in de volgorde van de activiteitenlijst · rij = ontvanger, kolom = leverancier') + (a ? afdrukMatrix(huidigeVolgorde(a.oorspronkelijk), { blokKolom: true, blokVan: bi.blokVan, grootBlok: bi.grootBlok, markeerTerug: true }) : geenA);
+    if (k.voorgesteld) h += kop('DSM — voorgestelde volgorde', bronBasis + ' · iteratieblokken (Tarjan) geordend en binnen elk blok geoptimaliseerd · rij = ontvanger, kolom = leverancier') + (a ? afdrukMatrix(huidigeVolgorde(a.volgorde), { blokKolom: true, blokVan: bi.blokVan, grootBlok: bi.grootBlok, markeerTerug: true }) : geenA);
+    if (k.optimalisatie) {
+      h += kop('Optimalisatie per blok');
+      h += a ? (a.aantalIteratieblokken ? '<table class="lijst"><thead><tr><th>Blok</th><th class="num">Aantal</th><th>Volgorde in het blok</th><th>Uitkomst</th><th>Methode</th><th>Toelichting</th></tr></thead><tbody>' +
+        a.blokken.filter(b => b.leden.length > 1).map(b => '<tr><td class="mono"><b>' + b.id + '</b></td><td class="num">' + b.leden.length + '</td><td class="mono">' + (b.volgorde || b.leden).join(' → ') + '</td><td>' + (b.bewezen ? '<span class="label-ok">Optimaal — bewezen</span>' : '<span class="label-let">Beste gevonden — niet bewezen</span>') + '</td><td>' + esc(b.methode || '') + '</td><td>' + esc(b.reden || '') + '</td></tr>').join('') + '</tbody></table>' : '<p class="klein">Geen iteratieblokken: de volgorde is zonder terugkoppelingen te maken.</p>') : geenA;
+    }
+    if (k.vergelijking) {
+      h += kop('Vergelijking en parallelle mogelijkheden');
+      if (a) {
+        const d = (x, y) => { const v = y - x; return v < 0 ? '<b style="color:#0F6E56">' + v + '</b>' : v > 0 ? '<b style="color:#B42318">+' + v + '</b>' : '0'; };
+        h += kengetalTabel(['Oorspronkelijk', 'Voorgesteld', 'Verschil'], [['Terugkoppelingen', mo.terugkoppelingen, mv.terugkoppelingen, d(mo.terugkoppelingen, mv.terugkoppelingen)], ['… met wisseling van verantwoordelijke', mo.metWissel, mv.metWissel, d(mo.metWissel, mv.metWissel)], ['Totale terugkoppelafstand', mo.totaleAfstand, mv.totaleAfstand, d(mo.totaleAfstand, mv.totaleAfstand)], ['Grootste terugkoppelafstand', mo.grootsteAfstand, mv.grootsteAfstand, d(mo.grootsteAfstand, mv.grootsteAfstand)]]);
+        const alt = K.lidmaatschap(m), bl = {}; a.blokken.forEach(b => { bl[b.id] = b.leden; });
+        h += '<h3>Parallelle mogelijkheden</h3><p class="klein">Activiteiten of blokken op hetzelfde niveau hangen niet van elkaar af. ◆ = alternatief van een keuzepunt: niet tegelijk.</p><table class="lijst"><thead><tr><th class="num">Niveau</th><th>Activiteiten of blokken</th></tr></thead><tbody>' +
+          a.niveaus.map(nv => '<tr><td class="num">' + nv.niveau + '</td><td>' + nv.blokken.map(b => { const l = bl[b]; return l.length > 1 ? '<b>' + b + '</b> (' + l.join(' ') + ')' : '<span class="mono"><b>' + l[0] + '</b></span> ' + esc(naam(l[0])) + (alt[l[0]] ? ' <span class="alt-label">◆ ' + alt[l[0]].map(x => x.kp + ' optie ' + x.nr).join(', ') + '</span>' : ''); }).join(' · ') + '</td></tr>').join('') + '</tbody></table>';
+      } else h += geenA;
+    }
+    if (k.keuzepunten) {
+      const kps = K.keuzepunten(m);
+      h += kop('Keuzepunten');
+      h += kps.length ? kps.map(x => '<div class="afdrukblok"><p><b>' + x.id + ' ' + esc(naam(x.id)) + '</b>' + (x.vraag ? ' — ' + esc(x.vraag) : '') + '</p><table class="lijst"><thead><tr><th>Optie</th><th>Naam</th><th>Activiteiten in de optie</th></tr></thead><tbody>' +
+        x.opties.map(o => '<tr><td>◆ ' + o.nr + '</td><td>' + esc(o.naam) + '</td><td class="mono">' + o.leden.join(' → ') + '</td></tr>').join('') + '</tbody></table><p class="klein">Samenkomst: ' + (x.samenkomst.length ? x.samenkomst.map(y => y + ' ' + esc(naam(y))).join(', ') : 'geen') + '</p></div>').join('') : '<p class="klein">Geen keuzepunten in dit model.</p>';
+    }
+    if (k.scenarios) {
+      h += kop("Scenario's & tears");
+      if (!m.scenarios.length) h += '<p class="klein">Geen scenario\'s in dit model.</p>';
+      else if (!a) h += geenA;
+      else {
+        const z = m.scenarios.map(s => { if (!s.analyse) SC.bereken(m, s); return { s, z: SC.samenvatting(m, s), st: SC.status(m, s) }; });
+        h += kengetalTabel(['Basis'].concat(z.map(x => x.s.id + (x.st.status === 'verouderd' ? ' (verouderd)' : ''))), [
+          ['Tears', 0].concat(z.map(x => x.z.tears)), ['Terugkoppelingen', mv.terugkoppelingen].concat(z.map(x => x.z.terugkoppelingen)), ['Totale terugkoppelafstand', mv.totaleAfstand].concat(z.map(x => x.z.totaleAfstand)),
+          ['Iteratieblokken', a.aantalIteratieblokken].concat(z.map(x => x.z.blokken)), ['Activiteiten in grootste blok', a.grootsteBlok].concat(z.map(x => x.z.grootsteBlok)),
+          ['Gekozen opties', '—'].concat(z.map(x => x.z.keuzes ? x.z.keuzes + ' (' + x.z.weggevallen + ' vervallen)' : '—')), ['B-tears niet afgestemd', '—'].concat(z.map(x => x.z.bOpen))]);
+        z.forEach(({ s }) => {
+          const oord = SC.beoordeel(m, s), tk = {};
+          oord.filter(b => b.geldig).forEach(b => { tk[relSleutel(b.tear.van, b.tear.naar)] = b.letop.some(l => l.code === 'b-open') ? 'open' : 'ok'; });
+          const sb = blokInfo(s.analyse), volg = scenarioVolgorde(s);
+          const kz = Object.keys(s.keuzes || {});
+          h += kop('Scenario ' + s.id + ' — ' + esc(s.naam), bronBasis + ' · voorgestelde volgorde van dit scenario' + (kz.length ? ' · gekozen: ' + kz.map(b => { const kp = K.keuzepunten(m).find(x => x.id === b); const o = kp && kp.opties.find(x => x.kop === s.keuzes[b]); return b + ' → ' + (o ? esc(o.naam) : s.keuzes[b]); }).join(', ') : '')) +
+            afdrukMatrix(volg, { blokKolom: true, blokVan: sb.blokVan, grootBlok: sb.grootBlok, markeerTerug: true, tears: tk }, s.id) +
+            (oord.length ? '<table class="lijst"><thead><tr><th>Tear</th><th>Soort</th><th>Aanname</th><th>Verantwoordelijke</th><th>Controle na</th><th>Gevolgen</th><th>Status</th></tr></thead><tbody>' +
+              oord.map(b => '<tr><td class="mono"><b>' + b.tear.van + ' → ' + b.tear.naar + '</b></td><td>' + (b.soort ? chipSoort(b.soort, 'vertical-align:middle') : '?') + '</td><td>' + esc(b.tear.aanname) + '</td><td>' + esc(b.tear.verantwoordelijke || '') + '</td><td>' + (b.tear.controleNa ? b.tear.controleNa + ' ' + esc(naam(b.tear.controleNa)) : '—') + '</td><td>' + esc(b.tear.gevolgen || '') + '</td><td class="klein">' + esc(b.fouten.map(f => f.melding).concat(b.letop.map(l => l.tekst)).join(' · ') || 'in orde') + '</td></tr>').join('') + '</tbody></table>' : '<p class="klein">Geen tears in dit scenario.</p>');
+        });
+      }
+    }
+    if (k.legenda) {
+      h += kop('Legenda en leeswijzer');
+      h += '<div class="legenda">' + Object.keys(SOORTEN).map(x => '<span>' + chipSoort(x) + SOORTEN[x].kort + '</span>').join('') + '<span><span class="chip fbm"></span>Terugkoppeling (boven de diagonaal)</span><span><span class="chip blokm"></span>Iteratieblok</span><span><span class="chip tearm">✂</span>Tear</span></div>' +
+        '<ul class="klein"><li>Rij = ontvanger (heeft iets nodig), kolom = leverancier (levert). Het kolomnummer is het volgnummer in de rij.</li><li>Onder de diagonaal: de informatie is er op tijd. Boven de diagonaal (rode rand): terugkoppeling, kans op rework.</li><li>Iteratieblok: activiteiten die via een kring van elkaar afhangen; een eerste aanknopingspunt voor nader onderzoek.</li><li>Kengetallen zijn structureel: ze tellen relaties en plaatsen, geen uren of doorlooptijd.</li><li>Uitgebreide uitleg: de helppagina van de DSM.</li></ul>';
+    }
+    const keuze = '<div class="afdrukkeuze"><span class="klein"><b>Afdrukken:</b></span>' +
+      AFDRUKDELEN.map(([sl, nm]) => '<label class="vinkje"><input type="checkbox" data-afdruk="' + sl + '"' + (k[sl] ? ' checked' : '') + '> ' + nm + '</label>').join('') +
+      '<span class="rij"><button class="knop klein-k" data-afdrukset="resultaat">Alleen resultaat</button><button class="knop klein-k" data-afdrukset="alles">Alles</button><button class="knop klein-k" data-afdrukset="niets">Niets</button></span></div>';
+    inhoud.innerHTML =
+      '<section class="paneel breed geen-afdruk" style="flex:1 1 100%"><div class="rij tussen"><div><h2>Export &amp; afdrukken</h2><p class="klein">Het <b>werkbestand</b> (.xlsx) bevat de invoer (Activiteiten, Relaties, Keuzepunten, Scenario\'s, Tears en Instellingen), zodat je het later weer kunt openen, plus de uitvoer van de analyse. Bij <b>afdrukken</b> kies je hieronder welke onderdelen meegaan; de voorvertoning eronder toont precies wat er wordt afgedrukt (A4 liggend). Via "Opslaan als PDF" in het afdrukvenster maak je er een PDF van.</p></div>' +
+      '<div class="rij"><button class="knop primair" id="exp-xlsx">Werkbestand opslaan (.xlsx)</button><button class="knop" id="exp-print"' + (n ? '' : ' disabled') + '>Afdrukken / PDF</button><button class="knop" id="exp-json" title="Reservekopie als .json; ook weer te openen met Openen…">Reservekopie (.json)</button></div></div>' + keuze +
+      (a && !actueel ? '<div class="balk-let">De analyse is verouderd. Klik rechtsboven op <b>Analyse uitvoeren</b> voor een actuele afdruk.</div>' : '') + '</section>' +
+      '<section class="paneel breed afdruk" style="flex:1 1 100%">' + (h || '<p class="klein">Kies hierboven minstens één onderdeel om af te drukken.</p>') + '</section>';
+    inhoud.querySelectorAll('.afdrukmatrix').forEach(kd => {
+      const b = kd.dataset.blokbron, sc = b === 'basis' ? null : m.scenarios.find(x => x.id === b);
+      tekenBlokkaders(kd, kd.dataset.afdrukvolg.split(' '), sc ? sc.analyse.blokken : a ? a.blokken : null);
+    });
+  }
+  inhoud.addEventListener('click', e => {
+    if (ui.tab !== 'rapport') return;
+    const t = e.target, ad = t.closest('[data-afdrukset]');
+    if (ad) { const set = ad.dataset.afdrukset; Object.keys(ui.afdruk).forEach(x => { ui.afdruk[x] = set === 'alles' || (set === 'resultaat' && RESULTAAT.includes(x)); }); renderRapport(); return; }
+    if (t.dataset && t.dataset.afdruk) { ui.afdruk[t.dataset.afdruk] = t.checked; renderRapport(); return; }
+    if (t.id === 'exp-xlsx') opslaanExcel();
+    else if (t.id === 'exp-json') opslaanJson();
+    else if (t.id === 'exp-print') window.print();
+  });
 
   render();
   if (!heeftInhoud()) toonOk('Welkom. Begin met activiteiten toevoegen, of kies "Voorbeeld" rechtsboven om een voorbeeldmodel te laden.');

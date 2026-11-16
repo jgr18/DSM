@@ -259,3 +259,29 @@ table.dsm td.s-V { background: var(--V); color: var(--V-t); font-size: calc(var(
 .vast-menu { position: sticky; top: 0; z-index: 50; }
 .vast-menu .helpbalk { position: static; }
 @media print { .vast-menu { position: static; } }
+
+/* Export & afdrukken (v0.7, naar het voorbeeld van de assessmentplanner) */
+.afdrukkeuze { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px 12px; border-radius: 8px; background: #F4F4F2; border: 1px solid var(--lijn); }
+.vinkje { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+.afdruk { display: flex; flex-direction: column; gap: 14px; }
+.afdruk h2 { margin: 0; font-size: 18px; }
+.afdruk h3 { margin: 8px 0 0; font-size: 14px; }
+.afdruk .bron { font-size: 12px; color: var(--tekst-3); }
+.afdruk .matrixkader { max-height: none; overflow: auto; align-self: flex-start; }
+.afdruk table.dsm thead th.hoek { min-width: 200px; }
+.afdruk table.dsm tbody th { max-width: 240px; font-size: 10px; }
+.afdrukblok { break-inside: avoid; }
+@media print {
+  @page { size: A4 landscape; margin: 12mm; }
+  body { background: #FFFFFF; }
+  .vast-menu, .meldingen, #meldingen { display: none !important; }
+  .inhoud { padding: 0; max-width: none; display: block; }
+  .geen-afdruk { display: none !important; }
+  .paneel { border: 0 !important; padding: 0 !important; box-shadow: none !important; }
+  .matrixkader { max-height: none !important; overflow: visible !important; border: 0; }
+  table.dsm thead th, table.dsm tbody th { position: static !important; }
+  .pagina-breuk { break-before: page; }
+  .afdruk table.lijst { font-size: 11px; }
+  .afdruk table.lijst tr { break-inside: avoid; }
+  table.dsm td, table.dsm th, table.lijst td, .chip, .label-ok, .label-let, .label-info, .label-fout, .alt-label, .blokkader, .legenda span, .maat { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

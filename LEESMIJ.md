@@ -1,6 +1,6 @@
 # DSM
 
-**Versie 0.6** — het versienummer staat in de kop. Na een update laadt de browser dankzij `?v=0.6` achter de scripts en de opmaak de nieuwe bestanden.
+**Versie 0.7** — het versienummer staat in de kop. Na een update laadt de browser dankzij `?v=0.7` achter de scripts en de opmaak de nieuwe bestanden.
 
 Webtool voor de analyse van projecten en processen met een Design Structure Matrix (DSM). De tool draait volledig in de browser: er is geen server, database of account nodig.
 
@@ -41,6 +41,22 @@ Webtool voor de analyse van projecten en processen met een Design Structure Matr
 - `controle.html` rekent vaste controlevoorbeelden door: ketens, cycli, losse blokken, harde voorwaarden en tegenspraken, gewijzigde regelvolgorde, actualiteit, ID's en een model van 100 activiteiten.
 
 **Nog niet beschikbaar:** het opgemaakte rapport (PDF en Excel met handleiding). Ook afdelingen, beschikbaarheidsdatums, doorlooptijd, capaciteit en simulatie zitten er nog niet in.
+
+## Wijzigingen in versie 0.7: Excel en afdrukken
+
+Overgenomen uit de assessmentplanner.
+
+- **Opslaan = Excel-werkbestand** (.xlsx), met tabbladkleuren per soort:
+  - grijs: Toelichting en Instellingen;
+  - groen: de invoer (Activiteiten, Relaties, Keuzepunten, Scenario's, Tears), die bij Openen weer wordt ingelezen;
+  - blauw: de uitvoer (DSM oorspronkelijk, DSM voorgesteld, Blokken, Vergelijking, Parallel, Scenariovergelijking).
+- **Openen** leest .xlsx én .json. Een reservekopie als .json kan via Export & afdrukken.
+- **Tabblad Export & afdrukken** (was Rapportage):
+  - vinkjes per onderdeel en de sneltoetsen Alleen resultaat / Alles / Niets;
+  - een voorvertoning die precies laat zien wat er wordt afgedrukt;
+  - elk onderdeel op een nieuwe pagina, A4 liggend, met de kleuren behouden; via de printdialoog maak je er een PDF van.
+- **Nieuwe bestanden:** `js/xlsx.js` en `js/xlsxlezen.js` (Excel schrijven en lezen, zonder externe bibliotheken; uit de assessmentplanner) en `js/excelio.js` (indeling van het werkbestand).
+- **Controles:** er is een controle bij voor opslaan en weer openen in Excel, dus 21 in totaal.
 
 ## Wijzigingen in versie 0.6
 
@@ -152,6 +168,8 @@ Pak de map uit en dubbelklik op `index.html`. De tool werkt in een recente versi
 | `js/analyse.js` | Tarjan, ordening, optimalisatie, maten en impact |
 | `js/keuze.js` | Voorwaardelijke relaties en keuzepunten |
 | `js/scenario.js` | Scenario's en tears |
+| `js/xlsx.js`, `js/xlsxlezen.js` | Excel schrijven en lezen (uit de assessmentplanner) |
+| `js/excelio.js` | Indeling van het Excel-werkbestand |
 | `js/helpmodus.js` | Helpmodus: van onderdeel naar uitleg |
 | `js/app.js` | Schermen en bediening |
 | `js/controle.js` | Definitie van de controlevoorbeelden |

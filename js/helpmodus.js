@@ -4,7 +4,7 @@
   'use strict';
   const REGELS = [
     ['.knop-link', 'start'], ['.versie', 'versies'], ['#status', 'verouderd'], ['#knop-analyse', 'analyse-uitvoeren'],
-    ['.bestand', 'opslaan'], ['#modelnaam', 'opslaan'], ['#meta', 'versies'],
+    ['.bestand', 'opslaan'], ['#exp-xlsx', 'opslaan'], ['#exp-json', 'opslaan'], ['.afdrukkeuze', 'rapport'], ['#exp-print', 'rapport'], ['.afdruk', 'rapport'], ['#modelnaam', 'opslaan'], ['#meta', 'versies'],
     ['.groeplabel', 'werkwijze'],
     ['td.tear', 'tear'], ['td.diag', 'diagonaal'],
     ['td.s-I', 'soort-I'], ['td.s-H', 'soort-H'], ['td.s-B', 'soort-B'], ['td.s-V', 'soort-V'], ['td.fb', 'terugkoppeling'],

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Help — DSM</title>
-<link rel="stylesheet" href="css/style.css?v=0.6">
+<link rel="stylesheet" href="css/style.css?v=0.7">
 <style>
   .help { max-width: 1240px; margin: 0 auto; padding: 24px; display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 32px; align-items: start; }
   .kop { position: sticky; top: 0; z-index: 50; }
@@ -43,7 +43,7 @@
 </style>
 </head>
 <body>
-<header class="kop"><div class="kop-links"><span class="merk">DSM</span> <span class="versie">v0.6</span><span class="meta">Help en verantwoording</span></div>
+<header class="kop"><div class="kop-links"><span class="merk">DSM</span> <span class="versie">v0.7</span><span class="meta">Help en verantwoording</span></div>
 <div class="kop-rechts"><button class="knop-donker" onclick="window.print()">Afdrukken</button><a href="index.html" style="color:#F4F4F2">← Naar de DSM</a></div></header>
 
 <div class="help">
@@ -57,7 +57,7 @@
   <li><a href="#analyse">De analyse</a><ol><li><a href="#analyse-uitvoeren">Analyse uitvoeren</a></li><li><a href="#iteratieblok">Iteratieblokken</a></li><li><a href="#doelvolgorde">Doelvolgorde</a></li><li><a href="#bewezen">Bewezen of beste gevonden</a></li><li><a href="#weergave">Oorspronkelijk en voorgesteld</a></li><li><a href="#instellingen">Instellingen</a></li></ol></li>
   <li><a href="#maten">Kengetallen en vergelijking</a><ol><li><a href="#vergelijking">Vergelijking</a></li><li><a href="#parallel">Parallelle mogelijkheden</a></li><li><a href="#impact">Wijzigingsimpact</a></li></ol></li>
   <li><a href="#tears">Scenario's &amp; tears</a><ol><li><a href="#scenarios">Scenario's</a></li><li><a href="#tear">Wat is een tear?</a></li><li><a href="#tear-regels">Regels per soort</a></li><li><a href="#tear-velden">Een tear vastleggen</a></li><li><a href="#keuze-scenario">Een optie kiezen</a></li><li><a href="#vergelijken-basis">Vergelijken met de basis</a></li></ol></li>
-  <li><a href="#controleerbaarheid">Controleerbaarheid</a><ol><li><a href="#versies">Versies</a></li><li><a href="#verouderd">Verouderd</a></li><li><a href="#controlepagina">Controlepagina</a></li><li><a href="#opslaan">Opslaan en openen</a></li><li><a href="#rapport">Rapportage</a></li></ol></li>
+  <li><a href="#controleerbaarheid">Controleerbaarheid</a><ol><li><a href="#versies">Versies</a></li><li><a href="#verouderd">Verouderd</a></li><li><a href="#controlepagina">Controlepagina</a></li><li><a href="#opslaan">Opslaan en openen</a></li><li><a href="#rapport">Export &amp; afdrukken</a></li></ol></li>
   <li><a href="#keuzes">Ontwerpkeuzes en verantwoording</a></li>
   <li><a href="#begrippen">Begrippenlijst</a></li>
 </ol>
@@ -195,15 +195,20 @@
 
 <h2 id="controleerbaarheid">Controleerbaarheid</h2>
 <h3 id="versies">Versies</h3>
-<p>Elke wijziging verhoogt de <b>invoerversie</b>, die in de kop staat. Een analyse onthoudt bij welke invoerversie en instellingen hij is berekend. Het label <b>v0.6</b> naast de naam is de versie van de DSM zelf.</p>
+<p>Elke wijziging verhoogt de <b>invoerversie</b>, die in de kop staat. Een analyse onthoudt bij welke invoerversie en instellingen hij is berekend. Het label <b>v0.7</b> naast de naam is de versie van de DSM zelf.</p>
 <h3 id="verouderd">Verouderd</h3>
 <p>Wijzig je activiteiten, relaties of instellingen na een analyse, dan staat de analyse op <b>verouderd</b>. Je ziet de oude uitkomst nog wel, met een balk en de knop <b>Opnieuw berekenen</b>. Hetzelfde geldt voor scenario's, ook als de tears zijn gewijzigd. Is een getearde relatie inmiddels verdwenen of een harde voorwaarde geworden, dan meldt de DSM dat met een herstelactie en telt die tear niet mee.</p>
 <h3 id="controlepagina">Controlepagina</h3>
 <p>De <a href="controle.html">controlepagina</a> rekent vaste voorbeelden door en vergelijkt de uitkomst met wat er moet uitkomen: ketens, cycli, harde voorwaarden en tegenspraken, ID's, tears, en een model van 100 activiteiten. Draai haar na elke aanpassing van de DSM.</p>
 <h3 id="opslaan">Opslaan en openen</h3>
-<p>Het model wordt automatisch in de browser bewaard, maar alleen in die ene browser op die ene computer. Met <b>Opslaan</b> download je een .json-bestand met activiteiten, relaties, instellingen, analyse en scenario's. Met <b>Openen</b> laad je zo'n bestand weer in. Gebruik dit als back-up en om modellen te delen. Met <b>Nieuw</b> begin je leeg, met <b>Voorbeeld</b> laad je het voorbeeldmodel.</p>
-<h3 id="rapport">Rapportage</h3>
-<p>Een opgemaakt rapport (PDF en Excel met handleiding) volgt in een volgende versie. Tot die tijd kun je de matrix afdrukken via de afdrukfunctie van je browser, en deze helppagina met <b>Afdrukken</b>.</p>
+<p>Het model wordt automatisch in de browser bewaard, maar alleen in die ene browser op die ene computer. Met <b>Opslaan</b> download je een <b>Excel-werkbestand</b> (.xlsx). De tabbladen hebben een kleur per soort:</p>
+<ul><li><b>Grijs:</b> Toelichting en Instellingen.</li>
+<li><b>Groen, de invoer:</b> Activiteiten, Relaties, Keuzepunten, Scenario's en Tears. Deze tabbladen worden bij <b>Openen</b> weer ingelezen. Je kunt ze ook in Excel aanvullen: een nieuwe activiteit zonder ID krijgt bij openen automatisch een nieuwe ID.</li>
+<li><b>Blauw, de uitvoer:</b> DSM oorspronkelijk, DSM voorgesteld, Blokken, Vergelijking, Parallel en Scenariovergelijking, met dezelfde kleuren als in de DSM. De uitvoer wordt bij openen niet gelezen; voer na het openen de analyse opnieuw uit.</li></ul>
+<p><b>Openen</b> leest zowel een .xlsx-werkbestand als een .json-bestand uit een eerdere versie. Op het tabblad Export &amp; afdrukken kun je ook een <b>reservekopie (.json)</b> maken. Met <b>Nieuw</b> begin je leeg, met <b>Voorbeeld</b> laad je het voorbeeldmodel.</p>
+<h3 id="rapport">Export &amp; afdrukken</h3>
+<p>Op het tabblad <b>Export &amp; afdrukken</b> kies je met vinkjes welke onderdelen je wilt afdrukken: samenvatting, activiteitenlijst, relatielijst, de DSM in de oorspronkelijke en de voorgestelde volgorde, de optimalisatie per blok, de vergelijking en de parallelle mogelijkheden, keuzepunten, scenario's en tears (met per scenario de matrix), en de legenda. Er zijn drie sneltoetsen: <b>Alleen resultaat</b> (samenvatting, voorgestelde DSM en vergelijking), <b>Alles</b> en <b>Niets</b>.</p>
+<p>De voorvertoning eronder laat precies zien wat er wordt afgedrukt. Elk onderdeel begint op een nieuwe pagina, op A4 liggend, met een bronregel: modelnaam, invoerversie en datum. Met <b>Afdrukken / PDF</b> open je het afdrukvenster; kies daar "Opslaan als PDF" voor een PDF-bestand. Is de analyse verouderd, dan staat dat bovenaan en in de samenvatting.</p>
 
 <h2 id="keuzes">Ontwerpkeuzes en verantwoording</h2>
 <p>Hieronder staat per onderdeel of het de gangbare DSM-methode volgt of een eigen keuze van deze DSM is. Of alles passage voor passage overeenkomt met Eppinger &amp; Browning, is nog niet gecontroleerd.</p>
@@ -239,7 +244,7 @@
 <tr><td><b>Verouderd</b></td><td>Een analyse of scenario dat is berekend vóór de laatste wijziging.</td></tr>
 
 </table>
-<p class="klein">DSM v0.6 · <a href="index.html">Naar de DSM</a> · <a href="controle.html">Controlepagina</a></p>
+<p class="klein">DSM v0.7 · <a href="index.html">Naar de DSM</a> · <a href="controle.html">Controlepagina</a></p>
 </main>
 </div>
 </body>
