@@ -20,10 +20,10 @@
     ['.blokken', 'iteratieblok'], ['.niveaus', 'parallel'], ['.impact', 'impact'], ['#impact-keus', 'impact'],
     ['#uitlegpaneel', 'soorten-vergelijking'], ['.uitlegpop', 'soorten-vergelijking'], ['.vergelijk', 'soorten-vergelijking'],
     ['[data-greep]', 'activiteiten'], ['#plak', 'activiteiten'], ['#plak-knop', 'activiteiten'], ['#snel', 'activiteiten'], ['#act-rijen', 'activiteiten'],
-    ['#keuzepaneel', 'keuzepunt'], ['[data-sc-keuze]', 'keuze-scenario'], ['.alt-label', 'keuzepunt'], ['#mk', 'relaties'], ['#relpaneel', 'relaties'], ['.legenda-hint', 'soorten']
+    ['#keuzepaneel', 'keuzepunt'], ['[data-sc-keuze]', 'keuze-scenario'], ['.alt-label', 'keuzepunt'], ['[data-naar-iv]', 'interventie-vastleggen'], ['#iv-maatregel', 'maatregelen'], ['.ivform', 'interventie-vastleggen'], ['.ivlijst', 'interventie-vastleggen'], ['#mk', 'relaties'], ['#relpaneel', 'relaties'], ['.legenda-hint', 'soorten']
   ];
   const UITLEG = { I: 'soort-I', H: 'soort-H', B: 'soort-B', V: 'soort-V', T: 'terugkoppeling', K: 'iteratieblok', X: 'tear', M: 'kenmerken' };
-  const TAB = { activiteiten: 'activiteiten', relaties: 'relaties', analyse: 'analyse', vergelijking: 'vergelijking', scenarios: 'tears', rapport: 'rapport' };
+  const TAB = { activiteiten: 'activiteiten', relaties: 'relaties', analyse: 'analyse', vergelijking: 'vergelijking', scenarios: 'tears', interventies: 'interventies', rapport: 'rapport' };
 
   let aan = false, doel = null;
   const knop = document.getElementById('knop-helpmodus');

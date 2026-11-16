@@ -285,3 +285,44 @@ table.dsm td.s-V { background: var(--V); color: var(--V-t); font-size: calc(var(
   .afdruk table.lijst tr { break-inside: avoid; }
   table.dsm td, table.dsm th, table.lijst td, .chip, .label-ok, .label-let, .label-info, .label-fout, .alt-label, .blokkader, .legenda span, .maat { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* Interventies (v0.8, overgenomen uit de assessmentplanner) */
+.ivform { display: grid; grid-template-columns: 150px minmax(260px, 1.4fr) 1.4fr 1.2fr 1fr 140px; gap: 10px; align-items: start; }
+@media (max-width: 1300px) { .ivform { grid-template-columns: 150px 1fr 1fr; } }
+.ivform label, .ivform .ivlabel { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--tekst-3); }
+.ivform input, .ivform select, .ivform textarea { font: inherit; font-size: 13px; padding: 7px 8px; border: 1px solid #C9C9C4; border-radius: 6px; background: #FFFFFF; color: inherit; }
+.ivform textarea { resize: vertical; min-height: 36px; }
+.ivchips { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 6px; border: 1px solid #C9C9C4; border-radius: 6px; background: #FFFFFF; min-height: 36px; align-items: center; }
+.ivkies { display: flex; flex-wrap: wrap; gap: 4px; flex: 1 1 100%; min-width: 0; }
+.ivkies input { border: 0 !important; padding: 4px !important; flex: 1; min-width: 100px; outline: none; }
+.ivchip { display: inline-flex; align-items: center; gap: 2px; font-size: 12px; padding: 2px 8px; border-radius: 999px; white-space: nowrap; margin: 1px 0; }
+.ivchip.c-act { background: #F1EFE8; color: #2C2C2A; }
+.ivchip.c-rel { background: #E6F1FB; color: #0C447C; }
+.ivchip.c-blok { background: #FCF0C6; color: #4A3300; }
+.ivchip.c-kp { background: #E4DEFB; color: #3C3489; }
+.ivchip.c-scen { background: #E1F5EE; color: #085041; }
+.chipweg { border: 0; background: transparent; color: inherit; cursor: pointer; font-size: 14px; line-height: 1; padding: 0 0 0 4px; }
+.ivstatus { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.ivstatus.s-ok { background: #E1F5EE; color: #085041; }
+.ivstatus.s-wacht { background: #FAEEDA; color: #633806; }
+.ivstatus.s-niet { background: #FCEBEB; color: #791F1F; }
+.ivstatus.s-verv { background: #F1EFE8; color: #5F5E5A; }
+.ivreden { font-size: 12px; color: var(--tekst-2); margin-top: 3px; }
+.ivgevolg { font-size: 12px; color: #0F6E56; margin-top: 3px; }
+table.ivlijst td { vertical-align: top; }
+table.ivlijst tr.vervallen td { color: #888780; }
+.ivchip { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.ivchiplijst { display: contents; }
+.ivkiezer { margin-top: 10px; padding: 10px 12px; border: 1px solid #DCE6F6; border-radius: 8px; background: #F6F9FE; }
+.ivgroepen { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 14px; margin-top: 8px; }
+.ivvinken { display: flex; flex-direction: column; gap: 2px; max-height: 260px; overflow: auto; padding: 4px 2px; background: #FFFFFF; border: 1px solid #E1E1DC; border-radius: 6px; margin-top: 4px; }
+.ivvinken .vinkje { display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 2px 6px; cursor: pointer; border-radius: 4px; }
+.ivvinken .vinkje:hover { background: #EAF1FD; }
+.ivvinken .vinkje input { width: 16px; height: 16px; margin: 0; flex: none; }
+.linkknop { border: 0; background: none; padding: 0; color: #185FA5; font-size: 12px; cursor: pointer; text-decoration: underline; }
+.ivgroepen { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.ivform { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.ivform > :nth-child(3) { grid-column: span 3; }
+.ivform > :nth-child(4) { grid-column: span 2; }
+@media (max-width: 1000px) { .ivform { grid-template-columns: 1fr 1fr; } .ivform > :nth-child(3), .ivform > :nth-child(4) { grid-column: span 2; } }
+@media print { .ivstatus, .ivchip { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }

@@ -1,7 +1,7 @@
 /* DSM — Excel-werkbestand (opslaan en openen), naar het voorbeeld van de assessmentplanner.
    Tabbladen (tabkleur per soort):
      grijs  — Toelichting, Instellingen
-     groen  — invoer, wordt bij openen weer ingelezen: Activiteiten, Relaties, Keuzepunten, Scenario's, Tears
+     groen  — invoer, wordt bij openen weer ingelezen: Activiteiten, Relaties, Keuzepunten, Scenario's, Tears, Interventies
      blauw  — uitvoer van de analyse: DSM oorspronkelijk, DSM voorgesteld, Blokken, Vergelijking, Parallel, Scenariovergelijking
    Bij openen worden alleen de grijze en groene tabbladen gelezen; de uitvoer wordt opnieuw berekend. */
 (function (root) {
@@ -15,7 +15,7 @@
   const R = { rand: true };
   const SOORTKLEUR = { I: ['93B3EC', '0F2A63', ''], H: ['EBAA72', '4A2200', 'H'], B: ['A9D9C2', '0E2E1E', 'B'], V: ['E4DEFB', '3C3489', '◆'] };
   const DIAG = '6E6E69', BLOK = 'FCF0C6', BLOKRAND = '8A6400', ROOD = 'B42318';
-  const BLADNAMEN = { act: 'Activiteiten', rel: 'Relaties', kp: 'Keuzepunten', sc: "Scenario's", tear: 'Tears', inst: 'Instellingen' };
+  const BLADNAMEN = { act: 'Activiteiten', rel: 'Relaties', kp: 'Keuzepunten', sc: "Scenario's", tear: 'Tears', iv: 'Interventies', inst: 'Instellingen' };
 
   const titel = (t, bron, uitleg) => [[{ v: t, stijl: { vet: true } }], [bron || ''], [uitleg || ''], []];
   const jaNee = b => (b ? 'ja' : 'nee');
@@ -81,7 +81,7 @@
     const t = [[{ v: 'Werkbestand DSM', stijl: { vet: true } }], [bron], []];
     t.push([{ v: 'Kleuren van de tabbladen', stijl: { vet: true } }]);
     t.push([{ v: 'grijs', stijl: { vulling: KLEUR.toelichting, kleur: 'FFFFFF', vet: true, midden: true } }, 'Toelichting en instellingen']);
-    t.push([{ v: 'groen', stijl: { vulling: KLEUR.invoer, kleur: 'FFFFFF', vet: true, midden: true } }, 'Invoer: Activiteiten, Relaties, Keuzepunten, Scenario\'s, Tears. Deze tabbladen worden bij "Openen" weer ingelezen.']);
+    t.push([{ v: 'groen', stijl: { vulling: KLEUR.invoer, kleur: 'FFFFFF', vet: true, midden: true } }, 'Invoer: Activiteiten, Relaties, Keuzepunten, Scenario\'s, Tears, Interventies. Deze tabbladen worden bij "Openen" weer ingelezen.']);
     t.push([{ v: 'blauw', stijl: { vulling: KLEUR.uitvoer, kleur: 'FFFFFF', vet: true, midden: true } }, 'Uitvoer van de analyse. Wordt bij openen niet gelezen, maar opnieuw berekend.']);
     t.push([], [{ v: 'Werken in Excel', stijl: { vet: true } }],
       ['', 'Je kunt de groene tabbladen in Excel aanvullen of wijzigen en het bestand daarna weer openen in de DSM.'],
@@ -130,6 +130,14 @@
     tb.push(['Scenario', 'Leverancier (ID)', 'Ontvanger (ID)', 'Soort', 'Aanname', 'Verantwoordelijke', 'Controle na (ID)', 'Gevolgen als de aanname niet klopt', 'Afgestemd met', 'Afgestemd'].map(v => ({ v, stijl: KOP })));
     (m.scenarios || []).forEach(s => s.tears.forEach(x => { const r = M.vindRelatie(m, x.van, x.naar); tb.push([{ v: s.id, stijl: { rand: true, vet: true } }, { v: x.van, stijl: R }, { v: x.naar, stijl: R }, { v: r ? r.soort : '?', stijl: Object.assign({ midden: true }, R) }, { v: x.aanname, stijl: R }, { v: x.verantwoordelijke || '', stijl: R }, { v: x.controleNa || '', stijl: R }, { v: x.gevolgen || '', stijl: R }, { v: x.afgestemdMet || '', stijl: R }, { v: jaNee(x.afgestemd), stijl: Object.assign({ midden: true }, R) }]); }));
     bladen.push({ naam: BLADNAMEN.tear, rijen: tb, kolommen: [9, 14, 14, 7, 40, 20, 14, 40, 20, 10], bevries: { y: 5 }, tabKleur: KLEUR.invoer, keuzelijsten: [{ bereik: 'J6:J2000', lijst: ['ja', 'nee'] }] });
+
+    /* Interventies */
+    const ivb = titel('Interventies', bron, 'Logboek van maatregelen om iteratie en rework te beperken. Betreft: ID\'s gescheiden door ; met "relatie A006 → A004", "blok A004 A005", "keuzepunt A002" of "scenario S1". Datum als jjjj-mm-dd.');
+    ivb.push(['ID', 'Datum', 'Maatregel', 'Betreft', 'Wat is aangepast of voorgesteld', 'Reden', 'Overlegd met', 'Status'].map(v => ({ v, stijl: KOP })));
+    const SKLEUR = { 'Akkoord': ['E1F5EE', '085041'], 'In afwachting': ['FAEEDA', '633806'], 'Niet akkoord': ['FCEBEB', '791F1F'], 'Vervallen': ['F1EFE8', '5F5E5A'] };
+    (m.interventies || []).slice().sort((x, y) => (y.datum || '').localeCompare(x.datum || '') || y.id.localeCompare(x.id)).forEach(iv => ivb.push([{ v: iv.id, stijl: { rand: true, vet: true } }, { v: iv.datum, stijl: R }, { v: iv.maatregel, stijl: R }, { v: M.betreftTekst(m, iv.betreft), stijl: Object.assign({ terugloop: true }, R) },
+      { v: iv.wat, stijl: Object.assign({ terugloop: true }, R) }, { v: iv.reden, stijl: Object.assign({ terugloop: true }, R) }, { v: iv.overlegdMet, stijl: R }, { v: iv.status, stijl: { rand: true, vet: true, vulling: SKLEUR[iv.status][0], kleur: SKLEUR[iv.status][1] } }]));
+    bladen.push({ naam: BLADNAMEN.iv, rijen: ivb, kolommen: [8, 12, 34, 44, 50, 40, 24, 14], bevries: { y: 5 }, tabKleur: KLEUR.invoer, keuzelijsten: [{ bereik: 'C6:C2000', lijst: M.MAATREGELEN }, { bereik: 'H6:H2000', lijst: M.STATUSSEN }] });
 
     /* Instellingen */
     const ib = [[{ v: 'Instellingen', stijl: { vet: true } }], [bron], ['Wijzig alleen de waarden in kolom B.'], []];
@@ -274,6 +282,20 @@
       const plek = bron + ', Tears rij ' + (i + 6);
       if (!s) { fouten.push({ bron: plek, melding: 'Tear bij onbekend scenario "' + tekst(r[0]) + '".', herstel: 'Zet het scenario eerst op het tabblad Scenario\'s.' }); return; }
       s.tears.push({ van: tekst(r[1]).toUpperCase(), naar: tekst(r[2]).toUpperCase(), aanname: tekst(r[4]), verantwoordelijke: tekst(r[5]), controleNa: tekst(r[6]).toUpperCase(), gevolgen: tekst(r[7]), afgestemdMet: tekst(r[8]), afgestemd: tekst(r[9]).toLowerCase() === 'ja' });
+    });
+
+    (onderKop(await blad(BLADNAMEN.iv), 'ID') || []).forEach((r, i) => {
+      const plek = bron + ', Interventies rij ' + (i + 6);
+      let datum = r[1];
+      if (typeof datum === 'number') { const d = new Date(Math.round((datum - 25569) * 86400000)); datum = d.toISOString().slice(0, 10); }
+      datum = tekst(datum); const dm = datum.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/); if (dm) datum = dm[3] + '-' + dm[2].padStart(2, '0') + '-' + dm[1].padStart(2, '0');
+      const wat = tekst(r[4]);
+      if (!wat) { fouten.push({ bron: plek, melding: 'Interventie zonder beschrijving.', herstel: 'Vul "Wat is aangepast of voorgesteld" in of verwijder de regel.' }); return; }
+      const maatregel = M.MAATREGELEN.find(x => x.replace(/,/g, '').toLowerCase() === tekst(r[2]).replace(/,/g, '').toLowerCase()) || (tekst(r[2]) ? 'Anders' : '');
+      const id = /^I\d+$/i.test(tekst(r[0])) ? tekst(r[0]).toUpperCase() : null;
+      const iv = M.schoonInterventie({ id, datum, maatregel, betreft: M.leesBetreft(tekst(r[3])), wat, reden: tekst(r[5]), overlegdMet: tekst(r[6]), status: M.STATUSSEN.find(x => x.toLowerCase() === tekst(r[7]).toLowerCase()) || 'In afwachting' });
+      if (!iv.id || m.interventies.some(x => x.id === iv.id)) { const nr = m.interventies.reduce((x, y) => Math.max(x, parseInt(y.id.slice(1), 10) || 0), 0) + 1; iv.id = 'I' + String(nr).padStart(3, '0'); }
+      m.interventies.push(iv);
     });
 
     m.invoerversie++;

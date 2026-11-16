@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Help — DSM</title>
-<link rel="stylesheet" href="css/style.css?v=0.7">
+<link rel="stylesheet" href="css/style.css?v=0.8">
 <style>
   .help { max-width: 1240px; margin: 0 auto; padding: 24px; display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 32px; align-items: start; }
   .kop { position: sticky; top: 0; z-index: 50; }
@@ -43,7 +43,7 @@
 </style>
 </head>
 <body>
-<header class="kop"><div class="kop-links"><span class="merk">DSM</span> <span class="versie">v0.7</span><span class="meta">Help en verantwoording</span></div>
+<header class="kop"><div class="kop-links"><span class="merk">DSM</span> <span class="versie">v0.8</span><span class="meta">Help en verantwoording</span></div>
 <div class="kop-rechts"><button class="knop-donker" onclick="window.print()">Afdrukken</button><a href="index.html" style="color:#F4F4F2">← Naar de DSM</a></div></header>
 
 <div class="help">
@@ -57,6 +57,7 @@
   <li><a href="#analyse">De analyse</a><ol><li><a href="#analyse-uitvoeren">Analyse uitvoeren</a></li><li><a href="#iteratieblok">Iteratieblokken</a></li><li><a href="#doelvolgorde">Doelvolgorde</a></li><li><a href="#bewezen">Bewezen of beste gevonden</a></li><li><a href="#weergave">Oorspronkelijk en voorgesteld</a></li><li><a href="#instellingen">Instellingen</a></li></ol></li>
   <li><a href="#maten">Kengetallen en vergelijking</a><ol><li><a href="#vergelijking">Vergelijking</a></li><li><a href="#parallel">Parallelle mogelijkheden</a></li><li><a href="#impact">Wijzigingsimpact</a></li></ol></li>
   <li><a href="#tears">Scenario's &amp; tears</a><ol><li><a href="#scenarios">Scenario's</a></li><li><a href="#tear">Wat is een tear?</a></li><li><a href="#tear-regels">Regels per soort</a></li><li><a href="#tear-velden">Een tear vastleggen</a></li><li><a href="#keuze-scenario">Een optie kiezen</a></li><li><a href="#vergelijken-basis">Vergelijken met de basis</a></li></ol></li>
+  <li><a href="#interventies">Interventies</a><ol><li><a href="#maatregelen">Soorten maatregel</a></li><li><a href="#interventie-vastleggen">Een interventie vastleggen</a></li></ol></li>
   <li><a href="#controleerbaarheid">Controleerbaarheid</a><ol><li><a href="#versies">Versies</a></li><li><a href="#verouderd">Verouderd</a></li><li><a href="#controlepagina">Controlepagina</a></li><li><a href="#opslaan">Opslaan en openen</a></li><li><a href="#rapport">Export &amp; afdrukken</a></li></ol></li>
   <li><a href="#keuzes">Ontwerpkeuzes en verantwoording</a></li>
   <li><a href="#begrippen">Begrippenlijst</a></li>
@@ -193,9 +194,32 @@
 <h3 id="vergelijken-basis">Vergelijken met de basis</h3>
 <p>Onder de matrix staan de basis en alle scenario's naast elkaar: tears, terugkoppelingen, afstand, iteratieblokken (met de leden), het grootste blok, de B-tears die nog niet zijn afgestemd en de controlemomenten. Daaronder zie je welke activiteiten in het gekozen scenario een andere plaats krijgen dan in de basis.</p>
 
+<h2 id="interventies">Interventies</h2>
+<p>De analyse laat zien <i>waar</i> iteratie en kans op rework zitten: in iteratieblokken en lange terugkoppelingen. Een <b>interventie</b> is een maatregel om daar iets aan te doen. Op het tabblad <b>Interventies</b> houd je een logboek bij van wat je hebt aangepast of voorgesteld, met wie je dat hebt besproken en wat de status is. Zo blijft na te gaan welke opties al zijn bekeken, ook als ze niet zijn doorgegaan.</p>
+<h3 id="maatregelen">Soorten maatregel</h3>
+<p>Dit zijn gangbare verbetermogelijkheden voor procesarchitectuur, zoals ze in de DSM-praktijk worden gebruikt. De indeling in deze lijst is een eigen keuze van deze DSM.</p>
+<table><tr><th style="width:28%">Maatregel</th><th>Wat het is</th><th style="width:30%">Zie je terug in de DSM als</th></tr>
+<tr><td><b>Volgorde aanpassen</b></td><td>De activiteiten in een andere volgorde uitvoeren, bijvoorbeeld de voorgestelde volgorde overnemen.</td><td>Minder of kortere terugkoppelingen in de oorspronkelijke volgorde.</td></tr>
+<tr><td><b>Tear met aanname</b></td><td>Een terugkoppeling bewust doorbreken: de ontvanger begint met een vastgelegde aanname die later wordt gecontroleerd.</td><td>Een tear in een scenario; het blok wordt kleiner of verdwijnt.</td></tr>
+<tr><td><b>Overlappen</b></td><td>Een activiteit al laten beginnen met voorlopige informatie, voordat de leverancier helemaal klaar is.</td><td>Vaak vastgelegd als tear; geen verandering in de relaties zelf.</td></tr>
+<tr><td><b>Informatie eerder uitwisselen</b></td><td>Afspreken dat (een deel van) de informatie eerder of vaker wordt gedeeld, zodat de ontvanger minder hoeft te raden.</td><td>Kenmerken van de relatie (zekerheid, frequentie); de kans op rework daalt.</td></tr>
+<tr><td><b>Activiteit splitsen</b></td><td>Een activiteit opdelen, zodat het deel dat anderen nodig hebben eerder klaar is.</td><td>Nieuwe activiteit(en); de kring in het blok wordt doorbroken.</td></tr>
+<tr><td><b>Activiteiten samenvoegen</b></td><td>Sterk gekoppelde activiteiten tot één activiteit maken, met één verantwoordelijke.</td><td>Een kleiner blok, met de iteratie binnen één activiteit.</td></tr>
+<tr><td><b>Activiteit toevoegen of schrappen</b></td><td>Een ontbrekende stap toevoegen (bijvoorbeeld een vroege afstemming), of een overbodige stap weglaten.</td><td>Andere activiteiten en relaties.</td></tr>
+<tr><td><b>Samen uitvoeren</b></td><td>De activiteiten van een blok door één team of in nauwe samenwerking laten uitvoeren, zodat de iteratie snel en goedkoop is.</td><td>Dezelfde verantwoordelijke; minder terugkoppelingen met wisseling van verantwoordelijke.</td></tr>
+<tr><td><b>Relatie aanpassen</b></td><td>Een afhankelijkheid wegnemen of afzwakken, bijvoorbeeld door een standaard of een vaste afspraak, of een relatie een andere soort geven.</td><td>Een relatie die verdwijnt of een andere soort krijgt.</td></tr>
+<tr><td><b>Anders</b></td><td>Alles wat niet in deze lijst past.</td><td>—</td></tr></table>
+<h3 id="interventie-vastleggen">Een interventie vastleggen</h3>
+<ul><li><b>Datum</b> van het overleg en de <b>maatregel</b>.</li>
+<li><b>Betreft:</b> een of meer activiteiten, relaties, iteratieblokken, keuzepunten of scenario's. Typ om te zoeken en druk op Enter of +, of gebruik <b>Kiezen…</b> om er meerdere tegelijk aan te vinken. Een iteratieblok wordt bewaard als de lijst van zijn activiteiten, zodat het herkenbaar blijft als de bloknummers na een nieuwe analyse veranderen.</li>
+<li><b>Wat is aangepast of voorgesteld</b> (verplicht), de <b>reden</b> en met wie het is <b>overlegd</b>.</li>
+<li><b>Status:</b> Akkoord, In afwachting, Niet akkoord of Vervallen.</li></ul>
+<p>Op DSM analyse staat bij een geselecteerde relatie de knop <b>Interventie vastleggen…</b>; die vult de relatie en het bijbehorende iteratieblok alvast in. In Scenario's &amp; tears staat dezelfde knop voor het gekozen scenario.</p>
+<p>In de lijst toont de regel <b>"Nu:"</b> hoe het betreffende onderdeel er in de huidige analyse voor staat: is de relatie nog een terugkoppeling, bestaat het blok nog, wat levert het scenario op. Zo zie je of een maatregel effect heeft gehad. De lijst staat met de nieuwste bovenaan en heeft een filter. Interventies staan ook in het Excel-werkbestand (tabblad Interventies, wordt weer ingelezen) en zijn aan te vinken bij afdrukken.</p>
+
 <h2 id="controleerbaarheid">Controleerbaarheid</h2>
 <h3 id="versies">Versies</h3>
-<p>Elke wijziging verhoogt de <b>invoerversie</b>, die in de kop staat. Een analyse onthoudt bij welke invoerversie en instellingen hij is berekend. Het label <b>v0.7</b> naast de naam is de versie van de DSM zelf.</p>
+<p>Elke wijziging verhoogt de <b>invoerversie</b>, die in de kop staat. Een analyse onthoudt bij welke invoerversie en instellingen hij is berekend. Het label <b>v0.8</b> naast de naam is de versie van de DSM zelf.</p>
 <h3 id="verouderd">Verouderd</h3>
 <p>Wijzig je activiteiten, relaties of instellingen na een analyse, dan staat de analyse op <b>verouderd</b>. Je ziet de oude uitkomst nog wel, met een balk en de knop <b>Opnieuw berekenen</b>. Hetzelfde geldt voor scenario's, ook als de tears zijn gewijzigd. Is een getearde relatie inmiddels verdwenen of een harde voorwaarde geworden, dan meldt de DSM dat met een herstelactie en telt die tear niet mee.</p>
 <h3 id="controlepagina">Controlepagina</h3>
@@ -203,11 +227,11 @@
 <h3 id="opslaan">Opslaan en openen</h3>
 <p>Het model wordt automatisch in de browser bewaard, maar alleen in die ene browser op die ene computer. Met <b>Opslaan</b> download je een <b>Excel-werkbestand</b> (.xlsx). De tabbladen hebben een kleur per soort:</p>
 <ul><li><b>Grijs:</b> Toelichting en Instellingen.</li>
-<li><b>Groen, de invoer:</b> Activiteiten, Relaties, Keuzepunten, Scenario's en Tears. Deze tabbladen worden bij <b>Openen</b> weer ingelezen. Je kunt ze ook in Excel aanvullen: een nieuwe activiteit zonder ID krijgt bij openen automatisch een nieuwe ID.</li>
+<li><b>Groen, de invoer:</b> Activiteiten, Relaties, Keuzepunten, Scenario's, Tears en Interventies. Deze tabbladen worden bij <b>Openen</b> weer ingelezen. Je kunt ze ook in Excel aanvullen: een nieuwe activiteit zonder ID krijgt bij openen automatisch een nieuwe ID.</li>
 <li><b>Blauw, de uitvoer:</b> DSM oorspronkelijk, DSM voorgesteld, Blokken, Vergelijking, Parallel en Scenariovergelijking, met dezelfde kleuren als in de DSM. De uitvoer wordt bij openen niet gelezen; voer na het openen de analyse opnieuw uit.</li></ul>
 <p><b>Openen</b> leest zowel een .xlsx-werkbestand als een .json-bestand uit een eerdere versie. Op het tabblad Export &amp; afdrukken kun je ook een <b>reservekopie (.json)</b> maken. Met <b>Nieuw</b> begin je leeg, met <b>Voorbeeld</b> laad je het voorbeeldmodel.</p>
 <h3 id="rapport">Export &amp; afdrukken</h3>
-<p>Op het tabblad <b>Export &amp; afdrukken</b> kies je met vinkjes welke onderdelen je wilt afdrukken: samenvatting, activiteitenlijst, relatielijst, de DSM in de oorspronkelijke en de voorgestelde volgorde, de optimalisatie per blok, de vergelijking en de parallelle mogelijkheden, keuzepunten, scenario's en tears (met per scenario de matrix), en de legenda. Er zijn drie sneltoetsen: <b>Alleen resultaat</b> (samenvatting, voorgestelde DSM en vergelijking), <b>Alles</b> en <b>Niets</b>.</p>
+<p>Op het tabblad <b>Export &amp; afdrukken</b> kies je met vinkjes welke onderdelen je wilt afdrukken: samenvatting, activiteitenlijst, relatielijst, de DSM in de oorspronkelijke en de voorgestelde volgorde, de optimalisatie per blok, de vergelijking en de parallelle mogelijkheden, keuzepunten, scenario's en tears (met per scenario de matrix), interventies en de legenda. Er zijn drie sneltoetsen: <b>Alleen resultaat</b> (samenvatting, voorgestelde DSM en vergelijking), <b>Alles</b> en <b>Niets</b>.</p>
 <p>De voorvertoning eronder laat precies zien wat er wordt afgedrukt. Elk onderdeel begint op een nieuwe pagina, op A4 liggend, met een bronregel: modelnaam, invoerversie en datum. Met <b>Afdrukken / PDF</b> open je het afdrukvenster; kies daar "Opslaan als PDF" voor een PDF-bestand. Is de analyse verouderd, dan staat dat bovenaan en in de samenvatting.</p>
 
 <h2 id="keuzes">Ontwerpkeuzes en verantwoording</h2>
@@ -219,6 +243,7 @@
 <tr><td>Tears en scenario's</td><td><span class="bron boek">DSM-methode</span></td><td>Tearing komt uit de methode. De vastlegging per tear (aanname, verantwoordelijke, controlemoment, gevolgen) en de regels per soort zijn een <span class="bron eigen">eigen keuze</span>.</td></tr>
 <tr><td>Relatiesoorten: informatie (blauw, zonder letter), H en B</td><td><span class="bron eigen">eigen keuze</span></td><td>De literatuur kent verschillende manieren om relaties te typeren of te wegen. Deze beantwoorden de vragen die bij het ordenen en tearen tellen: kan de ontvanger beginnen zonder de informatie, en wie beslist daarover? Een vroegere vierde soort, "aanname toegestaan", is samengevoegd met informatie: voor de analyse maakte het onderscheid niet uit, en boven de diagonaal geldt voor beide hetzelfde: kans op rework. Oude bestanden met A worden bij het openen automatisch omgezet.</td></tr>
 <tr><td>Voorwaardelijke relaties (◆), keuzepunten en samenkomst</td><td><span class="bron boek">DSM-methode</span></td><td>Het boek noemt voorwaardelijke relaties als vierde basispatroon en stelt voor ze met een eigen symbool, zoals een ruit, te tonen. Hoe de DSM opties, takken en samenkomst afleidt uit de relaties, en het doorrekenen per optie in een scenario, is een <span class="bron eigen">eigen keuze</span>.</td></tr>
+<tr><td>Interventies en soorten maatregel</td><td><span class="bron eigen">eigen keuze</span></td><td>Het logboek is overgenomen uit de assessmentplanner. De maatregelen zijn gangbare verbetermogelijkheden voor procesarchitectuur, zoals volgorde aanpassen, tearen, overlappen, splitsen, samenvoegen en samen uitvoeren; de indeling in tien soorten is een eigen keuze.</td></tr>
 <tr><td>"Bewezen optimaal" tegenover "beste gevonden"</td><td><span class="bron eigen">eigen keuze</span></td><td>Om eerlijk te laten zien wanneer een uitkomst zeker de beste is en wanneer niet.</td></tr>
 <tr><td>Vaste, nooit hergebruikte ID's; invoerversie; verouderd-status; controlepagina</td><td><span class="bron eigen">eigen keuze</span></td><td>Voor controleerbaarheid: elke uitkomst is terug te voeren op de invoer waarmee hij is berekend.</td></tr>
 <tr><td>Geen uren, doorlooptijd, capaciteit of simulatie</td><td><span class="bron eigen">eigen keuze</span></td><td>Bewust buiten de scope gehouden. De kengetallen zijn structureel; ze zeggen waar risico op herhaling zit, niet hoe lang iets duurt.</td></tr></table>
@@ -229,6 +254,7 @@
 <tr><td><b>Blok</b></td><td>Een groep van één of meer activiteiten die samen een eenheid vormen in de ordening. Een blok van twee of meer is een iteratieblok.</td></tr>
 <tr><td><b>Controlemoment</b></td><td>Het moment waarop de aanname van een tear wordt gecontroleerd: na afronding van een gekozen activiteit.</td></tr>
 <tr><td><b>Diagonaal</b></td><td>De vakjes waar een activiteit zichzelf kruist; toont het volgnummer.</td></tr>
+<tr><td><b>Interventie</b></td><td>Een vastgelegde maatregel om iteratie en rework te beperken, met datum, betreft, status en overleg.</td></tr>
 <tr><td><b>Iteratieblok</b></td><td>Activiteiten die via een kring van relaties van elkaar afhangen.</td></tr>
 <tr><td><b>Keuzepunt</b></td><td>Een activiteit waarin wordt besloten welke van twee of meer opties wordt uitgevoerd; vastgelegd met ◆-relaties.</td></tr>
 <tr><td><b>Leverancier</b></td><td>De activiteit die informatie levert (de kolom).</td></tr>
@@ -244,7 +270,7 @@
 <tr><td><b>Verouderd</b></td><td>Een analyse of scenario dat is berekend vóór de laatste wijziging.</td></tr>
 
 </table>
-<p class="klein">DSM v0.7 · <a href="index.html">Naar de DSM</a> · <a href="controle.html">Controlepagina</a></p>
+<p class="klein">DSM v0.8 · <a href="index.html">Naar de DSM</a> · <a href="controle.html">Controlepagina</a></p>
 </main>
 </div>
 </body>

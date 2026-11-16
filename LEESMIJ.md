@@ -1,6 +1,6 @@
 # DSM
 
-**Versie 0.7** — het versienummer staat in de kop. Na een update laadt de browser dankzij `?v=0.7` achter de scripts en de opmaak de nieuwe bestanden.
+**Versie 0.8** — het versienummer staat in de kop. Na een update laadt de browser dankzij `?v=0.8` achter de scripts en de opmaak de nieuwe bestanden.
 
 Webtool voor de analyse van projecten en processen met een Design Structure Matrix (DSM). De tool draait volledig in de browser: er is geen server, database of account nodig.
 
@@ -10,6 +10,7 @@ Webtool voor de analyse van projecten en processen met een Design Structure Matr
 - Activiteiten toevoegen door te typen of te plakken uit Excel: één per regel, `naam` of `naam ⇥ verantwoordelijke`.
 - Elke activiteit krijgt een unieke, blijvende ID (A001, A002, …). Een verwijderde ID wordt nooit opnieuw uitgegeven.
 - Relaties vastleggen in de matrix. Een **rij** is de **ontvanger** (heeft informatie nodig) en een **kolom** is de **leverancier**. A → B betekent: B heeft informatie van A nodig.
+- Interventies: logboek van maatregelen bij iteratieblokken en terugkoppelingen.
 - Vier soorten relaties: **informatie** (blauw vakje zonder letter, toets I), **H** harde uitvoeringsvoorwaarde, **B** bescherming en **◆** voorwaardelijk (keuze, toets V).
 - Per relatie: welke informatie nodig is, en later eventueel zekerheid, frequentie en bron.
 - Met het toetsenbord snel invoeren: pijltjes, I/H/B, Delete en Enter.
@@ -41,6 +42,22 @@ Webtool voor de analyse van projecten en processen met een Design Structure Matr
 - `controle.html` rekent vaste controlevoorbeelden door: ketens, cycli, losse blokken, harde voorwaarden en tegenspraken, gewijzigde regelvolgorde, actualiteit, ID's en een model van 100 activiteiten.
 
 **Nog niet beschikbaar:** het opgemaakte rapport (PDF en Excel met handleiding). Ook afdelingen, beschikbaarheidsdatums, doorlooptijd, capaciteit en simulatie zitten er nog niet in.
+
+## Wijzigingen in versie 0.8: interventies
+
+Naar het voorbeeld van de assessmentplanner.
+
+- **Tabblad Interventies:** een logboek van maatregelen om iteratie en rework te beperken. Per interventie leg je vast:
+  - datum en soort maatregel;
+  - betreft: activiteiten, relaties, iteratieblokken, keuzepunten of scenario's (zoeken, + of Kiezen…);
+  - wat is aangepast of voorgesteld, de reden en met wie overlegd;
+  - de status: Akkoord, In afwachting, Niet akkoord of Vervallen.
+  
+  De lijst staat met de nieuwste bovenaan en heeft een filter.
+- **Tien soorten maatregel:** Volgorde aanpassen, Tear met aanname, Overlappen, Informatie eerder uitwisselen, Activiteit splitsen, Activiteiten samenvoegen, Activiteit toevoegen of schrappen, Samen uitvoeren, Relatie aanpassen en Anders. Uitleg per soort staat in de helpfunctie.
+- **"Nu:" per interventie:** laat zien hoe het onderdeel er in de huidige analyse voor staat, bijvoorbeeld of de relatie nog een terugkoppeling is, of het blok nog bestaat en wat het scenario oplevert.
+- **Snelknop "Interventie vastleggen…"** bij een relatie op DSM analyse (vult ook het iteratieblok in) en bij een scenario.
+- **Excel:** het tabblad Interventies (groen) wordt weer ingelezen. Het staat ook bij afdrukken.
 
 ## Wijzigingen in versie 0.7: Excel en afdrukken
 

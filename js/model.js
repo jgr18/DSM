@@ -25,6 +25,7 @@
       zelfiteraties: [],
       scenarios: [],
       keuzepunten: {},
+      interventies: [],   // { id, datum, maatregel, betreft: [{ soort: act|rel|blok|kp|scen, naam }], wat, reden, overlegdMet, status }
       volgendeScenario: 1,
       instellingen: { wisselingVoorkeur: true, maxExact: 8, tijdlimietMs: 3000 },
       instellingenversie: 1,
@@ -190,6 +191,7 @@
     // Vanaf v0.6: zelfiteraties bestaan niet meer; oude waarden worden genegeerd.
     m.zelfiteraties = [];
     if (!m.keuzepunten || typeof m.keuzepunten !== 'object' || Array.isArray(m.keuzepunten)) m.keuzepunten = {};
+    m.interventies = Array.isArray(m.interventies) ? m.interventies.map(schoonInterventie) : [];
     m.relaties = (m.relaties || []).map(r => Object.assign({ info: '', zekerheid: '', frequentie: '', bron: '' }, r, r.soort === 'A' ? { soort: 'I' } : {}));
     const max = m.activiteiten.reduce((x, a) => Math.max(x, idNummer(a.id) || 0), 0);
     const maxV = (m.vervallenIds || []).reduce((x, id) => Math.max(x, idNummer(id) || 0), 0);
@@ -210,7 +212,51 @@
   }
 
   DSM.SOORTEN = SOORTEN;
+  /* ---------- interventies: logboek van maatregelen om iteratie en rework te beperken ---------- */
+  const STATUSSEN = ['Akkoord', 'In afwachting', 'Niet akkoord', 'Vervallen'];
+  const MAATREGELEN = ['Volgorde aanpassen', 'Tear met aanname', 'Overlappen', 'Informatie eerder uitwisselen', 'Activiteit splitsen', 'Activiteiten samenvoegen',
+    'Activiteit toevoegen of schrappen', 'Samen uitvoeren', 'Relatie aanpassen', 'Anders'];
+  const BETREFT = ['act', 'rel', 'blok', 'kp', 'scen'];
+  function schoonInterventie(iv) {
+    return {
+      id: iv.id, datum: String(iv.datum || '').slice(0, 10), status: STATUSSEN.includes(iv.status) ? iv.status : 'In afwachting',
+      maatregel: MAATREGELEN.includes(iv.maatregel) ? iv.maatregel : (iv.maatregel ? 'Anders' : ''),
+      betreft: (iv.betreft || []).filter(b => b && b.naam && BETREFT.includes(b.soort)).map(b => ({ soort: b.soort, naam: String(b.naam) })),
+      wat: String(iv.wat || ''), reden: String(iv.reden || ''), overlegdMet: String(iv.overlegdMet || '')
+    };
+  }
+  function voegInterventieToe(m, iv) {
+    m.interventies = m.interventies || [];
+    const nr = m.interventies.reduce((x, i) => Math.max(x, parseInt(String(i.id).replace(/\D/g, ''), 10) || 0), 0) + 1;
+    const n = schoonInterventie(Object.assign({}, iv, { id: 'I' + String(nr).padStart(3, '0') }));
+    m.interventies.push(n); m.invoerversie++; return n;
+  }
+  function wijzigInterventie(m, id, iv) { const i = (m.interventies || []).findIndex(x => x.id === id); if (i >= 0) { m.interventies[i] = schoonInterventie(Object.assign({}, iv, { id })); m.invoerversie++; } }
+  function verwijderInterventie(m, id) { m.interventies = (m.interventies || []).filter(x => x.id !== id); m.invoerversie++; }
+  /* Tekst voor Excel en zoeken: "A004 Constructieberekening; relatie A006 → A004; blok A004 A005 A006; keuzepunt A002; scenario S1" — en terug. */
+  function betreftTekst(m, lijst) {
+    return (lijst || []).map(b => {
+      if (b.soort === 'act') { const a = vind(m, b.naam); return b.naam + (a ? ' ' + a.naam : ''); }
+      if (b.soort === 'rel') return 'relatie ' + b.naam.replace('>', ' → ');
+      if (b.soort === 'blok') return 'blok ' + b.naam;
+      if (b.soort === 'kp') return 'keuzepunt ' + b.naam;
+      return 'scenario ' + b.naam;
+    }).join('; ');
+  }
+  function leesBetreft(tekst) {
+    return String(tekst || '').split(/[;\n]/).map(x => x.trim()).filter(Boolean).map(x => {
+      let r;
+      if ((r = x.match(/^relatie\s+(A\d+)\s*(?:→|->|>)\s*(A\d+)/i))) return { soort: 'rel', naam: r[1].toUpperCase() + '>' + r[2].toUpperCase() };
+      if ((r = x.match(/^blok\s+(.+)$/i))) return { soort: 'blok', naam: r[1].toUpperCase().split(/[\s,]+/).filter(Boolean).join(' ') };
+      if ((r = x.match(/^keuzepunt\s+(A\d+)/i))) return { soort: 'kp', naam: r[1].toUpperCase() };
+      if ((r = x.match(/^scenario\s+(S\d+)/i))) return { soort: 'scen', naam: r[1].toUpperCase() };
+      if ((r = x.match(/^(A\d+)/i))) return { soort: 'act', naam: r[1].toUpperCase() };
+      return null;
+    }).filter(Boolean);
+  }
+
   DSM.model = {
+    STATUSSEN, MAATREGELEN, schoonInterventie, voegInterventieToe, wijzigInterventie, verwijderInterventie, betreftTekst, leesBetreft,
     leegModel, maakId, vind, vindRelatie, plakActiviteiten, wijzigActiviteit, relatiesVan,
     verwijderActiviteit, verplaatsActiviteit, verplaatsNaar, zetRelatie, wisRelatie, wijzigKenmerk,
     zetInstelling, analyseStatus, valideer, normaliseer, bewaarLokaal, laadLokaal

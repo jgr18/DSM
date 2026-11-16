@@ -192,13 +192,14 @@
     },
     {
       naam: 'Excel-werkbestand: opslaan en weer openen',
-      uitleg: 'Het voorbeeldmodel met een keuzepunt, een scenario en een tear wordt als .xlsx opgeslagen en weer ingelezen. Activiteiten, relaties, keuzepunt, scenario, tear en instellingen moeten gelijk blijven.',
+      uitleg: 'Het voorbeeldmodel met een keuzepunt, een scenario en een tear wordt als .xlsx opgeslagen en weer ingelezen. Activiteiten, relaties, keuzepunt, scenario, tear, interventie en instellingen moeten gelijk blijven.',
       async test() {
         const S = DSM.scenario, m = M.normaliseer(JSON.parse(JSON.stringify(DSM.voorbeeld)));
         M.zetRelatie(m, 'A005', 'A007', 'V'); M.zetRelatie(m, 'A005', 'A008', 'V'); DSM.keuze.zetVraag(m, 'A005', 'Welk prototype?');
         DSM.keuze.zetOptieNaam(m, 'A005', 'A007', 'Snel prototype'); m.instellingen.maxExact = 7; S.zorgVoor(m);
         const sc = S.nieuwScenario(m, 'Proef'); S.zetKeuze(m, sc.id, 'A005', 'A008');
         S.zetTear(m, sc.id, { van: 'A006', naar: 'A004', aanname: 'Staal S235', controleNa: 'A006', verantwoordelijke: 'Engineering' });
+        M.voegInterventieToe(m, { datum: '2026-11-16', maatregel: 'Tear met aanname', betreft: [{ soort: 'rel', naam: 'A006>A004' }, { soort: 'blok', naam: 'A004 A005 A006' }, { soort: 'scen', naam: 'S1' }], wat: 'Rekenen met staal S235', reden: 'Blok B4 verkleinen', overlegdMet: 'Engineering', status: 'Akkoord' });
         m.analyse = A.analyseer(m);
         const bytes = DSM.xlsx.maak(DSM.excelio.werkbestandBladen(m));
         const res = await DSM.excelio.leesWerkbestand(bytes.buffer, 'proef.xlsx'), n = res.model;
@@ -206,7 +207,8 @@
         const ok = n && !res.fouten.length && gelijk(n.activiteiten.map(a => a.id + a.naam + a.eigenaar), m.activiteiten.map(a => a.id + a.naam + a.eigenaar)) && sleutel(n) === sleutel(m) &&
           n.keuzepunten.A005 && n.keuzepunten.A005.vraag === 'Welk prototype?' && n.keuzepunten.A005.namen.A007 === 'Snel prototype' &&
           n.scenarios.length === 1 && n.scenarios[0].keuzes.A005 === 'A008' && n.scenarios[0].tears.length === 1 && n.scenarios[0].tears[0].aanname === 'Staal S235' &&
-          n.instellingen.maxExact === 7 && n.volgendeNummer === m.volgendeNummer;
+          n.instellingen.maxExact === 7 && n.volgendeNummer === m.volgendeNummer &&
+          n.interventies.length === 1 && n.interventies[0].id === 'I001' && n.interventies[0].status === 'Akkoord' && n.interventies[0].maatregel === 'Tear met aanname' && JSON.stringify(n.interventies[0].betreft) === JSON.stringify(m.interventies[0].betreft);
         return { ok, detail: n ? n.activiteiten.length + ' activiteiten, ' + n.relaties.length + ' relaties, ' + n.scenarios.length + ' scenario, ' + res.fouten.length + ' meldingen · ' + bytes.length + ' bytes' : 'niet gelezen' };
       }
     },

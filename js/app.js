@@ -49,7 +49,7 @@
   }
   function render() {
     renderKop(); renderTabs();
-    ({ activiteiten: renderActiviteiten, relaties: renderRelaties, analyse: renderAnalyse, vergelijking: renderVergelijking, scenarios: renderScenarios, rapport: renderRapport })[ui.tab]();
+    ({ activiteiten: renderActiviteiten, relaties: renderRelaties, analyse: renderAnalyse, vergelijking: renderVergelijking, scenarios: renderScenarios, interventies: renderInterventies, rapport: renderRapport })[ui.tab]();
   }
   function naarTab(tab) { ui.tab = tab; wisMeldingen(); render(); window.scrollTo(0, 0); }
 
@@ -677,7 +677,8 @@
       (r.zekerheid ? '<dt>Zekerheid</dt><dd>' + esc(r.zekerheid) + '</dd>' : '') + (r.frequentie ? '<dt>Frequentie</dt><dd>' + esc(r.frequentie) + '</dd>' : '') + (r.bron ? '<dt>Bron</dt><dd>' + esc(r.bron) + '</dd>' : '') +
       '<dt>Positie</dt><dd>' + (d > 0 ? 'Terugkoppeling · afstand ' + d + (wissel ? ' · wisseling van verantwoordelijke' : '') : 'Vooruitkoppeling') + '</dd>' +
       '<dt>Blok</dt><dd>' + (bv && bv === bw ? 'Binnen ' + bv : (bv || '?') + ' → ' + (bw || '?')) + '</dd></dl>' +
-      (d > 0 ? (r.soort === 'H' ? '<p class="klein">Een harde voorwaarde kan niet worden doorbroken met een tear.</p>' : '<button class="knop" data-naar-tear>✂ Tear maken in scenario…</button><p class="klein">Opent het tabblad Scenario\'s &amp; tears met deze relatie.</p>') : '');
+      (d > 0 ? (r.soort === 'H' ? '<p class="klein">Een harde voorwaarde kan niet worden doorbroken met een tear.</p>' : '<button class="knop" data-naar-tear>✂ Tear maken in scenario…</button><p class="klein">Opent het tabblad Scenario\'s &amp; tears met deze relatie.</p>') : '') +
+      '<button class="knop" data-naar-iv="rel|' + r.van + '>' + r.naar + '">Interventie vastleggen…</button>';
     p.innerHTML = h;
   }
 
@@ -784,7 +785,7 @@
         '<div class="paneel"><div class="rij tussen"><div class="rij scen-rij"><span class="klein"><b>Scenario</b></span><span class="kaart-basis"><b>Basis</b><span>0 tears · ' + a.matenVoorgesteld.terugkoppelingen + ' terugk.</span></span>' + kaarten + '</div>' +
         '<div class="rij"><label class="verborgen" for="sc-bron">Nieuw scenario op basis van</label><select id="sc-bron">' + optie('', 'Nieuw: leeg', '') + m.scenarios.map(x => optie(x.id, 'Nieuw: kopie van ' + x.id, '')).join('') + '</select><button class="knop" data-sc="nieuw">+ Nieuw scenario</button></div></div></div>' +
         '<div class="paneel"><div class="rij tussen"><div class="rij"><label class="verborgen" for="sc-naam">Naam van het scenario</label><span class="celkop">' + s.id + '</span><input id="sc-naam" data-sc-naam value="' + esc(s.naam) + '" style="min-width:260px">' +
-          '<button class="knop" data-sc="kopie">Kopie maken</button><button class="knop gevaar" data-sc="weg">Verwijderen</button></div>' +
+          '<button class="knop" data-sc="kopie">Kopie maken</button><button class="knop gevaar" data-sc="weg">Verwijderen</button><button class="knop" data-naar-iv="scen|' + s.id + '">Interventie vastleggen…</button></div>' +
           '<div class="rij"><span class="maat">Tears <b>' + sv.tears + '</b></span><span class="maat">Terugkoppelingen <b>' + mt.terugkoppelingen + '</b></span><span class="maat">Totale afstand <b>' + mt.totaleAfstand + '</b></span><span class="maat">Iteratieblokken <b>' + sv.blokken + '</b></span>' + (sv.bOpen ? '<span class="maat open">B-tears niet afgestemd <b>' + sv.bOpen + '</b></span>' : '') + '</div></div>' +
           legenda('scenario') +
           '<div class="matrixkader" id="sk">' + bouwMatrix(volg, { blokKolom: true, blokVan: bi.blokVan, grootBlok: bi.grootBlok, markeerTerug: true, tears: tearKaart }) + '</div>' +
@@ -924,13 +925,167 @@
     }
   });
 
+  /* ================= INTERVENTIES ================= */
+  /* Logboek van maatregelen om iteratie en rework te beperken (naar het voorbeeld van de assessmentplanner). */
+  const STATUSKLASSE = { 'Akkoord': 's-ok', 'In afwachting': 's-wacht', 'Niet akkoord': 's-niet', 'Vervallen': 's-verv' };
+  const vandaag = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+  const datumNl = d => (/^\d{4}-\d{2}-\d{2}$/.test(d || '') ? d.slice(8, 10) + '-' + d.slice(5, 7) + '-' + d.slice(0, 4) : (d || ''));
+  const SOORTNAAM = { act: 'Activiteit', rel: 'Relatie', blok: 'Iteratieblok', kp: 'Keuzepunt', scen: 'Scenario' };
+  function betreftKeuzes() {
+    const k = [];
+    m.activiteiten.forEach(a => k.push({ soort: 'act', naam: a.id, tekst: a.id + ' ' + a.naam }));
+    const pos = {}; m.activiteiten.forEach((a, i) => { pos[a.id] = i; });
+    m.relaties.slice().sort((x, y) => (pos[x.naar] - pos[y.naar]) || (pos[x.van] - pos[y.van])).forEach(r => k.push({ soort: 'rel', naam: r.van + '>' + r.naar, tekst: 'relatie ' + r.van + ' → ' + r.naar + ' (' + naam(r.naar) + ' heeft iets nodig van ' + naam(r.van) + ')' }));
+    if (m.analyse) m.analyse.blokken.filter(b => b.leden.length > 1).forEach(b => k.push({ soort: 'blok', naam: b.leden.join(' '), tekst: 'blok ' + b.leden.join(' ') + ' (' + b.id + ')' }));
+    K.keuzepunten(m).forEach(x => k.push({ soort: 'kp', naam: x.id, tekst: 'keuzepunt ' + x.id + (x.vraag ? ' (' + x.vraag + ')' : ' ' + naam(x.id)) }));
+    m.scenarios.forEach(x => k.push({ soort: 'scen', naam: x.id, tekst: 'scenario ' + x.id + ' ' + x.naam }));
+    return k;
+  }
+  function ivChip(b, weg) {
+    const tekst = b.soort === 'act' ? b.naam + ' ' + naam(b.naam) : b.soort === 'rel' ? b.naam.replace('>', ' → ') : b.soort === 'blok' ? 'blok ' + b.naam : b.soort === 'kp' ? '◆ ' + b.naam : b.naam + ((SC.vindScenario(m, b.naam) || {}).naam ? ' ' + SC.vindScenario(m, b.naam).naam : '');
+    return '<span class="ivchip c-' + b.soort + '" title="' + SOORTNAAM[b.soort] + '">' + esc(tekst) + (weg !== undefined ? ' <button class="chipweg" data-ivchipweg="' + weg + '" aria-label="' + esc(tekst) + ' weghalen">×</button>' : '') + '</span>';
+  }
+  /* Effect in de huidige analyse, zodat je ziet of een maatregel iets heeft opgeleverd. */
+  function ivEffect(iv) {
+    const a = m.analyse, uit = [];
+    iv.betreft.forEach(b => {
+      if (b.soort === 'rel') {
+        const [van, naar] = b.naam.split('>'), r = M.vindRelatie(m, van, naar);
+        if (!r) { uit.push(b.naam.replace('>', ' → ') + ': relatie bestaat niet meer'); return; }
+        if (a) { const d = a.volgorde.indexOf(van) - a.volgorde.indexOf(naar); uit.push(b.naam.replace('>', ' → ') + (d > 0 ? ': nu terugkoppeling (afstand ' + d + ')' : ': nu onder de diagonaal')); }
+        const t = m.scenarios.filter(sc => SC.vindTear(sc, van, naar)).map(sc => sc.id);
+        if (t.length) uit.push('tear in ' + t.join(', '));
+      } else if (b.soort === 'blok' && a) {
+        const leden = b.naam.split(' '), nu = a.blokken.find(x => x.leden.length > 1 && leden.every(l => x.leden.includes(l)));
+        uit.push('blok ' + b.naam + (nu ? (nu.leden.length === leden.length ? ': bestaat nog (' + nu.id + ')' : ': nu deel van ' + nu.id + ' (' + nu.leden.length + ' activiteiten)') : ': bestaat niet meer in de basis'));
+      } else if (b.soort === 'scen' && a) {
+        const sc = SC.vindScenario(m, b.naam); if (!sc) { uit.push(b.naam + ': scenario bestaat niet meer'); return; }
+        if (!sc.analyse) SC.bereken(m, sc);
+        const z = SC.samenvatting(m, sc);
+        uit.push(sc.id + ': ' + z.terugkoppelingen + ' terugkoppeling(en) (basis ' + a.matenVoorgesteld.terugkoppelingen + '), ' + z.blokken + ' blok(ken) (basis ' + a.aantalIteratieblokken + ')');
+      } else if (b.soort === 'act') {
+        if (!M.vind(m, b.naam)) { uit.push(b.naam + ': activiteit bestaat niet meer'); return; }
+        if (a) { const bl = a.blokken.find(x => x.leden.length > 1 && x.leden.includes(b.naam)); if (bl) uit.push(b.naam + ' zit in ' + bl.id); }
+      }
+    });
+    return uit.join(' · ');
+  }
+  function ivFormLeeg() { return { datum: vandaag(), maatregel: '', betreft: [], wat: '', reden: '', overlegdMet: '', status: 'In afwachting' }; }
+  function interventieTabel(lijst, metKnoppen) {
+    if (!lijst.length) return '<p class="klein">Nog geen interventies vastgelegd.</p>';
+    return '<div class="tabelkader"><table class="lijst ivlijst"><thead><tr><th style="width:95px">Datum</th><th style="width:170px">Maatregel</th><th style="width:240px">Betreft</th><th>Wat is aangepast of voorgesteld</th><th style="width:170px">Overlegd met</th><th style="width:115px">Status</th>' + (metKnoppen ? '<th style="width:50px"></th>' : '') + '</tr></thead><tbody id="iv-rijen">' +
+      lijst.map(iv => {
+        const zoek = [iv.id, datumNl(iv.datum), iv.maatregel, M.betreftTekst(m, iv.betreft), iv.wat, iv.reden, iv.overlegdMet, iv.status].join(' ').toLowerCase(), eff = ivEffect(iv);
+        return '<tr data-zoek="' + esc(zoek) + '"' + (iv.status === 'Vervallen' ? ' class="vervallen"' : '') + '><td>' + esc(datumNl(iv.datum)) + '<div class="klein mono">' + iv.id + '</div></td><td>' + esc(iv.maatregel || '—') + '</td><td>' + iv.betreft.map(b => ivChip(b)).join(' ') + '</td><td>' + esc(iv.wat) +
+          (iv.reden ? '<div class="ivreden"><b>Reden:</b> ' + esc(iv.reden) + '</div>' : '') + (eff ? '<div class="ivgevolg">Nu: ' + esc(eff) + '</div>' : '') + '</td><td>' + esc(iv.overlegdMet) + '</td><td><span class="ivstatus ' + STATUSKLASSE[iv.status] + '">' + esc(iv.status) + '</span></td>' +
+          (metKnoppen ? '<td><button class="knop klein-k" data-ivbewerk="' + iv.id + '" title="Aanpassen of verwijderen" aria-label="Interventie ' + iv.id + ' aanpassen">✎</button></td>' : '') + '</tr>';
+      }).join('') + '</tbody></table></div>';
+  }
+  const ivGesorteerd = () => (m.interventies || []).slice().sort((a, b) => (b.datum || '').localeCompare(a.datum || '') || b.id.localeCompare(a.id));
+  function renderInterventies() {
+    if (!ui.ivForm) ui.ivForm = ivFormLeeg();
+    const f = ui.ivForm, bew = ui.ivBewerk, lijst = ivGesorteerd();
+    const tel = {}; M.STATUSSEN.forEach(x => { tel[x] = lijst.filter(y => y.status === x).length; });
+    inhoud.innerHTML =
+      '<section class="paneel" style="flex:1 1 100%"><h2>' + (bew ? 'Interventie ' + bew + ' aanpassen' : 'Interventie vastleggen') + '</h2>' +
+      '<p class="klein">Leg vast welke maatregel je hebt genomen of voorgesteld om iteratie en rework te beperken, bijvoorbeeld bij een iteratieblok of een lange terugkoppeling. Kies bij <b>Betreft</b> een of meer activiteiten, relaties, iteratieblokken, keuzepunten of scenario\'s: typ om te zoeken en druk op Enter of +, of klik <b>Kiezen…</b> om er meerdere tegelijk aan te vinken. Leg ook vast wat <b>niet akkoord</b> of <b>vervallen</b> is: dan zie je later welke opties al bekeken zijn.' + (m.analyse ? '' : ' Voer eerst de analyse uit om ook iteratieblokken te kunnen kiezen.') + '</p>' +
+      '<div class="ivform">' +
+      '<label>Datum overleg<input type="date" id="iv-datum" value="' + esc(f.datum) + '"></label>' +
+      '<label>Maatregel<select id="iv-maatregel"><option value="">— kies —</option>' + M.MAATREGELEN.map(x => '<option' + (f.maatregel === x ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '</select></label>' +
+      '<div class="ivlabel"><span>Betreft</span><div class="ivchips" id="iv-chips"><span id="iv-chiplijst" class="ivchiplijst">' + f.betreft.map((b, i) => ivChip(b, i)).join('') + '</span><span class="ivkies"><input id="iv-betreft" list="iv-keuzes" placeholder="typ om te zoeken…" autocomplete="off"><button class="knop klein-k" id="iv-betreft-knop" aria-label="Toevoegen" title="Getypte keuze toevoegen">+</button><button class="knop klein-k" id="iv-kiezer-knop" aria-expanded="' + !!ui.ivKiezer + '" title="Meerdere tegelijk aanvinken">Kiezen…</button></span></div>' +
+      '<datalist id="iv-keuzes">' + betreftKeuzes().map(x => '<option value="' + esc(x.tekst) + '"></option>').join('') + '</datalist></div>' +
+      '<label>Wat is aangepast of voorgesteld<textarea id="iv-wat" rows="2">' + esc(f.wat) + '</textarea></label>' +
+      '<label>Reden<textarea id="iv-reden" rows="2" placeholder="waarom nodig, of waarom (niet) akkoord">' + esc(f.reden) + '</textarea></label>' +
+      '<label>Overlegd met<input id="iv-overleg" value="' + esc(f.overlegdMet) + '" placeholder="namen of rollen"></label>' +
+      '<label>Status<select id="iv-status">' + M.STATUSSEN.map(x => '<option' + (f.status === x ? ' selected' : '') + '>' + x + '</option>').join('') + '</select></label>' +
+      '</div>' + (ui.ivKiezer ? ivKiezerHtml() : '') + '<div class="rij" style="margin-top:10px"><button class="knop primair" id="iv-opslaan">' + (bew ? 'Wijziging opslaan' : 'Toevoegen') + '</button>' +
+      (bew ? '<button class="knop" id="iv-annuleer">Annuleren</button><button class="knop gevaar" id="iv-verwijder">Verwijderen</button>' : '') +
+      '<span class="klein">Wordt bewaard in de browser en in het werkbestand (tabblad Interventies). Uitleg per maatregel staat in de helpfunctie.</span></div></section>' +
+      '<section class="paneel" style="flex:1 1 100%"><div class="rij tussen"><div><h2>Interventies</h2><span class="klein">' + lijst.length + ' interventie(s) · nieuwste bovenaan' + (lijst.length ? ' · ' + M.STATUSSEN.filter(x => tel[x]).map(x => tel[x] + ' ' + x.toLowerCase()).join(', ') : '') + '</span></div>' +
+      '<label class="rij klein">Filter <input id="iv-zoek" type="search" value="' + esc(ui.ivZoek || '') + '" placeholder="maatregel, ID, activiteit, persoon of status" style="width:280px"></label></div>' +
+      interventieTabel(lijst, true) + '<p class="klein">De regel "Nu:" laat zien hoe het betreffende onderdeel er in de huidige analyse voor staat, zodat je kunt zien of een maatregel effect heeft gehad.</p></section>';
+    ivFilter(); if (ui.ivKiezer) ivKiezerFilter();
+  }
+  function ivKiezerHtml() {
+    const k = betreftKeuzes(), f = ui.ivForm, aan = (x, n) => f.betreft.some(b => b.soort === x && b.naam === n);
+    const groep = (soort, titel) => { const l = k.filter(x => x.soort === soort); if (!l.length) return ''; return '<div class="ivgroep"><div class="rij tussen"><b class="klein">' + titel + '</b><span><button class="linkknop" data-ivgroep="' + soort + '" data-aan="1">zichtbare aan</button> · <button class="linkknop" data-ivgroep="' + soort + '" data-aan="0">uit</button></span></div><div class="ivvinken">' +
+      l.map(x => '<label class="vinkje" data-ivzoek="' + esc(x.tekst.toLowerCase()) + '"><input type="checkbox" data-ivkies="' + soort + '|' + esc(x.naam) + '"' + (aan(soort, x.naam) ? ' checked' : '') + '> ' + esc(x.tekst) + '</label>').join('') + '</div></div>'; };
+    return '<div class="ivkiezer" id="iv-kiezer"><div class="rij tussen"><label class="rij klein">Zoeken <input id="iv-kiezer-zoek" type="search" value="' + esc(ui.ivKiezerZoek || '') + '" placeholder="ID of naam" style="width:240px"></label><button class="knop klein-k" id="iv-kiezer-dicht">Klaar</button></div>' +
+      '<div class="ivgroepen">' + groep('act', 'Activiteiten') + groep('rel', 'Relaties') + groep('blok', 'Iteratieblokken') + groep('kp', 'Keuzepunten') + groep('scen', "Scenario's") + '</div></div>';
+  }
+  function ivKiezerFilter() { const q = (ui.ivKiezerZoek || '').trim().toLowerCase(); document.querySelectorAll('#iv-kiezer [data-ivzoek]').forEach(l => { l.style.display = !q || l.dataset.ivzoek.includes(q) ? '' : 'none'; }); }
+  function ivChipsVernieuw() {
+    const c = $('#iv-chiplijst'); if (c) c.innerHTML = ui.ivForm.betreft.map((b, i) => ivChip(b, i)).join('');
+    document.querySelectorAll('#iv-kiezer [data-ivkies]').forEach(cb => { const [x, n] = cb.dataset.ivkies.split('|'); cb.checked = ui.ivForm.betreft.some(b => b.soort === x && b.naam === n); });
+  }
+  function ivZet(soort, nm, aan) { const l = ui.ivForm.betreft, i = l.findIndex(b => b.soort === soort && b.naam === nm); if (aan && i < 0) l.push({ soort, naam: nm }); if (!aan && i >= 0) l.splice(i, 1); }
+  function ivFilter() { const q = (ui.ivZoek || '').trim().toLowerCase(); document.querySelectorAll('#iv-rijen tr').forEach(tr => { tr.style.display = !q || tr.dataset.zoek.includes(q) ? '' : 'none'; }); }
+  function ivLeesForm() {
+    const f = ui.ivForm; if (!f) return;
+    const v = id => { const e = document.getElementById(id); return e ? e.value : ''; };
+    f.datum = v('iv-datum'); f.maatregel = v('iv-maatregel'); f.wat = v('iv-wat').trim(); f.reden = v('iv-reden').trim(); f.overlegdMet = v('iv-overleg').trim(); f.status = v('iv-status') || f.status;
+  }
+  const zoekKeuze = t => { t = t.trim().toLowerCase(); const k = betreftKeuzes(); return k.find(x => x.tekst.toLowerCase() === t) || k.find(x => x.naam.toLowerCase() === t) || k.find(x => x.tekst.toLowerCase().startsWith(t)); };
+  function ivVoegBetreftToe() {
+    const inp = $('#iv-betreft'); if (!inp) return;
+    const t = inp.value.trim(); if (!t) return;
+    const k = zoekKeuze(t);
+    if (!k) { toonFouten([{ bron: 'Interventie, betreft', melding: '"' + t + '" staat niet in het model.', herstel: 'Kies een activiteit, relatie, iteratieblok, keuzepunt of scenario uit de lijst die verschijnt als je typt.' }]); return; }
+    ivLeesForm(); ivZet(k.soort, k.naam, true);
+    renderInterventies(); const n = $('#iv-betreft'); if (n) n.focus();
+  }
+  /* Snelknop vanuit DSM analyse of Scenario's: nieuw formulier met "betreft" al ingevuld. */
+  inhoud.addEventListener('click', e => {
+    const b = e.target.closest('[data-naar-iv]'); if (!b) return;
+    const [soort, nm] = b.dataset.naarIv.split('|');
+    ui.ivBewerk = null; ui.ivKiezer = false; ui.ivForm = ivFormLeeg(); ui.ivForm.betreft.push({ soort, naam: nm });
+    if (soort === 'rel' && m.analyse) { const [van, naar] = nm.split('>'); const bl = m.analyse.blokken.find(x => x.leden.length > 1 && x.leden.includes(van) && x.leden.includes(naar)); if (bl) ui.ivForm.betreft.push({ soort: 'blok', naam: bl.leden.join(' ') }); }
+    naarTab('interventies'); window.scrollTo(0, 0);
+  });
+  inhoud.addEventListener('click', e => {
+    if (ui.tab !== 'interventies') return;
+    const t = e.target, d = sel => t.closest(sel);
+    if (t.id === 'iv-betreft-knop') { ivVoegBetreftToe(); return; }
+    const cw = d('[data-ivchipweg]'); if (cw) { e.preventDefault(); ivLeesForm(); ui.ivForm.betreft.splice(+cw.dataset.ivchipweg, 1); ivChipsVernieuw(); return; }
+    if (t.id === 'iv-kiezer-knop') { e.preventDefault(); ivLeesForm(); ui.ivKiezer = !ui.ivKiezer; renderInterventies(); return; }
+    if (t.id === 'iv-kiezer-dicht') { ivLeesForm(); ui.ivKiezer = false; renderInterventies(); return; }
+    const gr = d('[data-ivgroep]');
+    if (gr) { e.preventDefault(); document.querySelectorAll('#iv-kiezer [data-ivkies^="' + gr.dataset.ivgroep + '|"]').forEach(cb => { if (cb.closest('label').style.display !== 'none') { const [x, n] = cb.dataset.ivkies.split('|'); ivZet(x, n, gr.dataset.aan === '1'); } }); ivChipsVernieuw(); return; }
+    const bw = d('[data-ivbewerk]');
+    if (bw) { const iv = (m.interventies || []).find(x => x.id === bw.dataset.ivbewerk); if (iv) { ui.ivBewerk = iv.id; ui.ivForm = JSON.parse(JSON.stringify(iv)); renderInterventies(); window.scrollTo(0, 0); } return; }
+    if (t.id === 'iv-annuleer') { ui.ivBewerk = null; ui.ivForm = null; ui.ivKiezer = false; renderInterventies(); return; }
+    if (t.id === 'iv-verwijder') { if (confirm('Interventie ' + ui.ivBewerk + ' verwijderen?')) { M.verwijderInterventie(m, ui.ivBewerk); ui.ivBewerk = null; ui.ivForm = null; na(); renderInterventies(); toonOk('Interventie verwijderd.'); } return; }
+    if (t.id === 'iv-opslaan') {
+      ivLeesForm(); const f = ui.ivForm;
+      const rest = $('#iv-betreft') ? $('#iv-betreft').value.trim() : '';
+      if (rest) { const kz = zoekKeuze(rest); if (kz) ivZet(kz.soort, kz.naam, true); }
+      const fout = [];
+      if (!f.datum) fout.push({ bron: 'Interventie', melding: 'Er is geen datum ingevuld.', herstel: 'Vul de datum van het overleg in.' });
+      if (!f.wat) fout.push({ bron: 'Interventie', melding: '"Wat is aangepast of voorgesteld" is leeg.', herstel: 'Beschrijf kort de maatregel.' });
+      if (fout.length) { toonFouten(fout); return; }
+      if (ui.ivBewerk) { M.wijzigInterventie(m, ui.ivBewerk, f); toonOk('Interventie ' + ui.ivBewerk + ' aangepast.'); }
+      else { const n = M.voegInterventieToe(m, f); toonOk('Interventie ' + n.id + ' vastgelegd.'); }
+      ui.ivBewerk = null; ui.ivForm = null; ui.ivKiezer = false; na(); renderInterventies(); window.scrollTo(0, 0);
+    }
+  });
+  inhoud.addEventListener('change', e => {
+    if (ui.tab !== 'interventies') return;
+    const cb = e.target.closest('[data-ivkies]'); if (cb) { const [x, n] = cb.dataset.ivkies.split('|'); ivLeesForm(); ivZet(x, n, cb.checked); ivChipsVernieuw(); }
+  });
+  inhoud.addEventListener('input', e => {
+    if (ui.tab !== 'interventies') return;
+    if (e.target.id === 'iv-zoek') { ui.ivZoek = e.target.value; ivFilter(); }
+    if (e.target.id === 'iv-kiezer-zoek') { ui.ivKiezerZoek = e.target.value; ivKiezerFilter(); }
+  });
+  inhoud.addEventListener('keydown', e => { if (ui.tab === 'interventies' && e.target.id === 'iv-betreft' && e.key === 'Enter') { e.preventDefault(); ivVoegBetreftToe(); } });
+
   /* ================= EXPORT & AFDRUKKEN ================= */
   const AFDRUKDELEN = [
     ['samenvatting', 'Samenvatting'], ['activiteiten', 'Activiteitenlijst'], ['relaties', 'Relatielijst'],
     ['oorspronkelijk', 'DSM oorspronkelijke volgorde'], ['voorgesteld', 'DSM voorgestelde volgorde'], ['optimalisatie', 'Optimalisatie per blok'],
-    ['vergelijking', 'Vergelijking en parallelle mogelijkheden'], ['keuzepunten', 'Keuzepunten'], ['scenarios', "Scenario's & tears"], ['legenda', 'Legenda en leeswijzer']];
+    ['vergelijking', 'Vergelijking en parallelle mogelijkheden'], ['keuzepunten', 'Keuzepunten'], ['scenarios', "Scenario's & tears"], ['interventies', 'Interventies'], ['legenda', 'Legenda en leeswijzer']];
   const RESULTAAT = ['samenvatting', 'voorgesteld', 'vergelijking'];
-  ui.afdruk = ui.afdruk || { samenvatting: true, activiteiten: false, relaties: false, oorspronkelijk: false, voorgesteld: true, optimalisatie: true, vergelijking: true, keuzepunten: true, scenarios: true, legenda: true };
+  ui.afdruk = ui.afdruk || { samenvatting: true, activiteiten: false, relaties: false, oorspronkelijk: false, voorgesteld: true, optimalisatie: true, vergelijking: true, keuzepunten: true, scenarios: true, interventies: true, legenda: true };
 
   function afdrukMatrix(volg, opties, blokbron) {
     const cel = Math.max(11, Math.min(26, Math.floor(720 / Math.max(volg.length, 1))));
@@ -1016,6 +1171,7 @@
         });
       }
     }
+    if (k.interventies) h += kop('Interventies', bronBasis + ' · maatregelen om iteratie en rework te beperken · nieuwste bovenaan') + interventieTabel(ivGesorteerd(), false);
     if (k.legenda) {
       h += kop('Legenda en leeswijzer');
       h += '<div class="legenda">' + Object.keys(SOORTEN).map(x => '<span>' + chipSoort(x) + SOORTEN[x].kort + '</span>').join('') + '<span><span class="chip fbm"></span>Terugkoppeling (boven de diagonaal)</span><span><span class="chip blokm"></span>Iteratieblok</span><span><span class="chip tearm">✂</span>Tear</span></div>' +
